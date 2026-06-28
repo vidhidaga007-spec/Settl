@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settl — Don't fill forms. Just talk.</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LANDING PAGE -->
+  <div id="landing-page">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="logo">Settl</div>
+      <div class="nav-buttons">
+        <button class="btn-ghost" onclick="showModal('login')">Login</button>
+        <button class="btn-primary" onclick="showModal('signup')">Sign up free</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-tag">AI-powered expense splitting</div>
+      <h1>Don't fill forms.<br/>Just talk.</h1>
+      <p class="hero-sub">Log shared expenses by speaking naturally. AI figures out who owes what — instantly.</p>
+
+      <!-- Live demo box -->
+      <div class="demo-box">
+        <div class="demo-label">Try it — no signup needed</div>
+        <div class="demo-input-row">
+          <input
+            type="text"
+            id="demo-input"
+            placeholder='e.g. "Paid ₹2,400 for dinner with Rahul and Ananya"'
+            onkeydown="if(event.key==='Enter') runDemo()"
+          />
+          <button class="mic-btn" onclick="runDemo()" title="Parse expense">→</button>
+        </div>
+        <div id="demo-result" class="demo-result hidden"></div>
+        <div class="demo-hint">Press Enter or click → to see AI parse it</div>
+      </div>
+
+      <button class="btn-primary btn-large" onclick="showModal('signup')">
+        Start for free — save your expenses
+      </button>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <h2>Everything you need. Nothing you don't.</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎙️</div>
+          <h3>Voice-first logging</h3>
+          <p>Speak naturally. AI understands amounts, people, and categories without you selecting anything.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI-powered parsing</h3>
+          <p>Detects the amount, category, who paid, and who owes — automatically, every time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Groups and personal</h3>
+          <p>Track group trips and private payments separately. Your personal deals stay private.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Relationship insights</h3>
+          <p>See who pays first, who delays, and your biggest spending categories across all groups.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="how-it-works">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Speak or type</h3>
+          <p>Say what you paid, who was there, and how much. That's it.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>AI parses instantly</h3>
+          <p>Settl detects the amount, members, category and where to log it.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Logged in seconds</h3>
+          <p>Confirm with one tap. Balances update for everyone automatically.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-logo">Settl</div>
+      <p>Don't fill forms. Just talk.</p>
+      <p class="footer-email">📧 hello@Settl.app</p>
+    </footer>
+
+  </div>
+
+  <!-- AUTH MODAL (shared for login + signup) -->
+  <div id="auth-modal" class="modal-overlay hidden" onclick="closeModalOnOverlay(event)">
+    <div class="modal">
+
+      <!-- LOGIN FORM -->
+      <div id="form-login">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2>Welcome back</h2>
+        <p class="modal-sub">Log in to your Settl account</p>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Your password" />
+        </div>
+        <div id="login-error" class="error-msg hidden"></div>
+        <button class="btn-primary btn-full" onclick="handleLogin()">Log in</button>
+        <p class="modal-switch">No account? <span onclick="showModal('signup')">Sign up</span></p>
+      </div>
+
+      <!-- SIGNUP FORM -->
+      <div id="form-signup" class="hidden">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2>Create your account</h2>
+        <p class="modal-sub">Free forever for small groups</p>
+        <div class="form-group">
+          <label>Your name</label>
+          <input type="text" id="signup-name" placeholder="Rahul Sharma" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="signup-email" placeholder="you@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" placeholder="At least 6 characters" />
+        </div>
+        <div id="signup-error" class="error-msg hidden"></div>
+        <button class="btn-primary btn-full" onclick="handleSignup()">Create account</button>
+        <p class="modal-switch">Already have an account? <span onclick="showModal('login')">Log in</span></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DASHBOARD (shown after login) -->
+  <div id="dashboard-page" class="hidden">
+    <nav class="navbar">
+      <div class="logo">Settl</div>
+      <div class="nav-buttons">
+        <span id="user-greeting" class="user-name"></span>
+        <button class="btn-ghost" onclick="handleLogout()">Log out</button>
+      </div>
+    </nav>
+    <div class="dashboard-placeholder">
+      <div class="placeholder-icon">🎉</div>
+      <h2>You're in!</h2>
+      <p>Phase 1 complete. Your account is set up and working.</p>
+      <p class="placeholder-sub">The full app (voice logging, groups, friends, insights) is coming in the next phases.</p>
+      <div class="coming-soon-list">
+        <div class="coming-item done">✅ Landing page</div>
+        <div class="coming-item done">✅ Login & signup</div>
+        <div class="coming-item">⏳ Voice expense logging</div>
+        <div class="coming-item">⏳ Groups & friends</div>
+        <div class="coming-item">⏳ Insights dashboard</div>
+        <div class="coming-item">⏳ Auto reminders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
