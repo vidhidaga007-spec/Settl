@@ -8,10 +8,11 @@
 </head>
 <body>
 
-  <!-- LANDING PAGE -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--              LANDING PAGE               -->
+  <!-- ═══════════════════════════════════════ -->
   <div id="landing-page">
 
-    <!-- Navbar -->
     <nav class="navbar">
       <div class="logo">Settl</div>
       <div class="nav-buttons">
@@ -20,13 +21,11 @@
       </div>
     </nav>
 
-    <!-- Hero -->
     <section class="hero">
       <div class="hero-tag">AI-powered expense splitting</div>
       <h1>Don't fill forms.<br/>Just talk.</h1>
       <p class="hero-sub">Log shared expenses by speaking naturally. AI figures out who owes what — instantly.</p>
 
-      <!-- Live demo box -->
       <div class="demo-box">
         <div class="demo-label">Try it — no signup needed</div>
         <div class="demo-input-row">
@@ -36,7 +35,7 @@
             placeholder='e.g. "Paid ₹2,400 for dinner with Rahul and Ananya"'
             onkeydown="if(event.key==='Enter') runDemo()"
           />
-          <button class="mic-btn" onclick="runDemo()" title="Parse expense">→</button>
+          <button class="mic-btn" onclick="runDemo()">→</button>
         </div>
         <div id="demo-result" class="demo-result hidden"></div>
         <div class="demo-hint">Press Enter or click → to see AI parse it</div>
@@ -47,7 +46,6 @@
       </button>
     </section>
 
-    <!-- Features -->
     <section class="features">
       <h2>Everything you need. Nothing you don't.</h2>
       <div class="features-grid">
@@ -74,7 +72,6 @@
       </div>
     </section>
 
-    <!-- How it works -->
     <section class="how-it-works">
       <h2>How it works</h2>
       <div class="steps">
@@ -98,7 +95,6 @@
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="footer-logo">Settl</div>
       <p>Don't fill forms. Just talk.</p>
@@ -107,11 +103,11 @@
 
   </div>
 
-  <!-- AUTH MODAL (shared for login + signup) -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--              AUTH MODAL                 -->
+  <!-- ═══════════════════════════════════════ -->
   <div id="auth-modal" class="modal-overlay hidden" onclick="closeModalOnOverlay(event)">
     <div class="modal">
-
-      <!-- LOGIN FORM -->
       <div id="form-login">
         <button class="modal-close" onclick="closeModal()">✕</button>
         <h2>Welcome back</h2>
@@ -129,7 +125,6 @@
         <p class="modal-switch">No account? <span onclick="showModal('signup')">Sign up</span></p>
       </div>
 
-      <!-- SIGNUP FORM -->
       <div id="form-signup" class="hidden">
         <button class="modal-close" onclick="closeModal()">✕</button>
         <h2>Create your account</h2>
@@ -150,12 +145,15 @@
         <button class="btn-primary btn-full" onclick="handleSignup()">Create account</button>
         <p class="modal-switch">Already have an account? <span onclick="showModal('login')">Log in</span></p>
       </div>
-
     </div>
   </div>
 
-  <!-- DASHBOARD (shown after login) -->
-  <div id="dashboard-page" class="hidden">
+  <!-- ═══════════════════════════════════════ -->
+  <!--                MAIN APP                 -->
+  <!-- ═══════════════════════════════════════ -->
+  <div id="app-page" class="hidden">
+
+    <!-- Top navbar -->
     <nav class="navbar">
       <div class="logo">Settl</div>
       <div class="nav-buttons">
@@ -163,23 +161,139 @@
         <button class="btn-ghost" onclick="handleLogout()">Log out</button>
       </div>
     </nav>
-    <div class="dashboard-placeholder">
-      <div class="placeholder-icon">🎉</div>
-      <h2>You're in!</h2>
-      <p>Phase 1 complete. Your account is set up and working.</p>
-      <p class="placeholder-sub">The full app (voice logging, groups, friends, insights) is coming in the next phases.</p>
-      <div class="coming-soon-list">
-        <div class="coming-item done">✅ Landing page</div>
-        <div class="coming-item done">✅ Login & signup</div>
-        <div class="coming-item">⏳ Voice expense logging</div>
-        <div class="coming-item">⏳ Groups & friends</div>
-        <div class="coming-item">⏳ Insights dashboard</div>
-        <div class="coming-item">⏳ Auto reminders</div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('log')">🎙️ Log</button>
+      <button class="tab-btn" onclick="showTab('groups')">👥 Groups</button>
+      <button class="tab-btn" onclick="showTab('friends')">🤝 Friends</button>
+      <button class="tab-btn" onclick="showTab('insights')">📊 Insights</button>
+    </div>
+
+    <!-- ── TAB 1: LOG ── -->
+    <div id="tab-log" class="tab-content">
+      <div class="log-container">
+
+        <p class="log-hint">Tap the mic and speak, or type below</p>
+
+        <!-- Big mic button -->
+        <div id="mic-button" class="big-mic" onclick="toggleRecording()">
+          <span id="mic-icon">🎙️</span>
+        </div>
+        <div id="recording-status" class="recording-status hidden">Listening... tap again to stop</div>
+
+        <!-- Text input -->
+        <div class="text-input-row">
+          <input
+            type="text"
+            id="expense-input"
+            placeholder='Or type: "Paid ₹500 for dinner with Rahul"'
+            onkeydown="if(event.key==='Enter') parseExpenseFromText()"
+          />
+          <button class="send-btn" onclick="parseExpenseFromText()">→</button>
+        </div>
+
+        <!-- AI thinking indicator -->
+        <div id="ai-thinking" class="ai-thinking hidden">
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div>
+          <span>AI is parsing...</span>
+        </div>
+
+        <!-- Confirmation card -->
+        <div id="confirm-card" class="confirm-card hidden">
+          <div class="confirm-header">✨ AI understood this</div>
+          <div class="confirm-original" id="confirm-original"></div>
+
+          <div class="confirm-field">
+            <label>Amount (₹)</label>
+            <input type="number" id="edit-amount" />
+          </div>
+          <div class="confirm-field">
+            <label>Description</label>
+            <input type="text" id="edit-description" />
+          </div>
+          <div class="confirm-field">
+            <label>Category</label>
+            <select id="edit-category">
+              <option>🍽️ Food</option>
+              <option>🚗 Travel</option>
+              <option>🏨 Accommodation</option>
+              <option>🎉 Entertainment</option>
+              <option>🛒 Groceries</option>
+              <option>💡 Utilities</option>
+              <option>🧾 General</option>
+            </select>
+          </div>
+          <div class="confirm-field">
+            <label>Who paid</label>
+            <input type="text" id="edit-paidby" />
+          </div>
+          <div class="confirm-field">
+            <label>Split with (names, comma separated)</label>
+            <input type="text" id="edit-people" />
+          </div>
+          <div class="confirm-field">
+            <label>Log this as</label>
+            <select id="edit-type">
+              <option value="personal">👤 Personal (just between friends)</option>
+              <option value="group">👥 Group expense</option>
+            </select>
+          </div>
+          <div class="confirm-field" id="group-name-field" style="display:none">
+            <label>Group name</label>
+            <input type="text" id="edit-group" placeholder="e.g. Goa Trip" />
+          </div>
+
+          <div class="confirm-split" id="confirm-split"></div>
+
+          <div class="confirm-buttons">
+            <button class="btn-confirm" onclick="confirmExpense()">✅ Confirm & save</button>
+            <button class="btn-cancel" onclick="cancelConfirm()">✕ Cancel</button>
+          </div>
+        </div>
+
+        <!-- Recent activity feed -->
+        <div class="feed-section">
+          <div class="feed-label">Recent expenses</div>
+          <div id="expense-feed">
+            <div class="feed-empty">No expenses yet. Tap the mic to log your first one!</div>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <!-- ── TAB 2: GROUPS (Phase 3) ── -->
+    <div id="tab-groups" class="tab-content hidden">
+      <div class="coming-soon">
+        <div class="cs-icon">👥</div>
+        <h2>Groups</h2>
+        <p>Coming in Phase 3 — create groups, invite friends, and track shared expenses together.</p>
+      </div>
+    </div>
+
+    <!-- ── TAB 3: FRIENDS (Phase 3) ── -->
+    <div id="tab-friends" class="tab-content hidden">
+      <div class="coming-soon">
+        <div class="cs-icon">🤝</div>
+        <h2>Friends</h2>
+        <p>Coming in Phase 3 — see combined balances with every friend across all groups and personal transactions.</p>
+      </div>
+    </div>
+
+    <!-- ── TAB 4: INSIGHTS (Phase 4) ── -->
+    <div id="tab-insights" class="tab-content hidden">
+      <div class="coming-soon">
+        <div class="cs-icon">📊</div>
+        <h2>Insights</h2>
+        <p>Coming in Phase 4 — your personal spending dashboard across all groups and friends.</p>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Load Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
