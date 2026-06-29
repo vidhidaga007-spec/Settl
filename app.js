@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════
 const SUPABASE_URL     = 'https://atfivtjagvavbzfabpez.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Zml2dGphZ3ZhdmJ6ZmFicGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NDA4NjksImV4cCI6MjA5ODIxNjg2OX0.xtC_PTi13XL4fJoeDKRcX2nBQj_xh3HldVFvGrovqs8'
-const GEMINI_API_KEY   = 'AQ.Ab8RN6L7L4d8ZMWcH8NZHFmLZL5jSGI_lwVXzoKIYNt8E0ULkA'
+const GEMINI_API_KEY   = 'AQ.Ab8RN6KiT3G7XrZvo4zNJ7d-7o6ilMmOAipIScKwatK4RGryGw'
 // ═══════════════════════════════════════════════
 
 const { createClient } = supabase
