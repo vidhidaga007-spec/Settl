@@ -242,8 +242,12 @@ const response = await fetch(
   }
 )
 const data = await response.json()
-const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    const parsed = extractJSON(text)
+console.log('Gemini raw response:', JSON.stringify(data))
+const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+             data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim()
+const parsed = extractJSON(cleaned)
+console.log('Parsed result:', parsed)
 
     showThinking(false)
     if (parsed) showConfirmCard(parsed)
@@ -548,14 +552,22 @@ function blobToBase64(blob) {
 }
 
 function extractJSON(text) {
+  if (!text) return null
+  // Remove markdown code blocks
+  text = text.replace(/```json/g, '').replace(/```/g, '').trim()
   try {
-    // Try direct parse first
     return JSON.parse(text)
   } catch {
-    // Extract JSON from markdown code block if wrapped
-    const match = text.match(/\{[\s\S]*\}/)
+    // Find anything between { and }
+    const match = text.match(/\{[\s\S]*?\}/)
     if (match) {
-      try { return JSON.parse(match[0]) } catch { return null }
+      try { return JSON.parse(match[0]) } catch {}
+    }
+    // Try finding the last { to }
+    const start = text.indexOf('{')
+    const end = text.lastIndexOf('}')
+    if (start !== -1 && end !== -1) {
+      try { return JSON.parse(text.substring(start, end + 1)) } catch {}
     }
     return null
   }
