@@ -1,6 +1,6 @@
 // api/gemini.js — Vercel serverless function
-// Calls Gemini API securely from the server using AQ. auth key
-// Key is passed as a URL query parameter — the correct method for AQ. keys
+// Authentication: X-goog-api-key header (matches Google AI Studio official cURL)
+// Model: gemini-2.0-flash-latest (matches Google AI Studio official cURL)
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -33,29 +33,28 @@ export default async function handler(req, res) {
       ]
     }
 
-    // ── KEY FIX: pass AQ. key as query parameter, not as a header ──
-    // AQ. auth keys work on the native endpoint via ?key= query param
-    // They fail with Authorization: Bearer and x-goog-api-key headers
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`
-
-    const geminiRes = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // No Authorization header — key is in the URL query param above
-      },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 512
-        }
-      })
-    })
+    // Exact match to Google AI Studio official cURL:
+    // POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent
+    // Header: X-goog-api-key: <API_KEY>
+    const geminiRes = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': GEMINI_API_KEY
+        },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 512
+          }
+        })
+      }
+    )
 
     const geminiData = await geminiRes.json()
-
-    // Log full response for debugging in Vercel logs
     console.log('Gemini status:', geminiRes.status)
     console.log('Gemini response:', JSON.stringify(geminiData).slice(0, 500))
 
@@ -73,13 +72,13 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Gemini returned empty response', raw: geminiData })
     }
 
-    // Clean markdown formatting Gemini sometimes wraps around JSON
+    // Clean markdown formatting Gemini sometimes adds
     const cleaned = responseText
       .replace(/```json/gi, '')
       .replace(/```/g, '')
       .trim()
 
-    // Parse JSON from Gemini response
+    // Parse JSON
     let parsed = null
     try {
       parsed = JSON.parse(cleaned)
@@ -118,7 +117,7 @@ RULES:
 - If no people are mentioned, people array should be empty []
 - type is "group" if 3+ people or a group/trip name is mentioned, else "personal"
 
-Return ONLY a valid JSON object. No markdown. No backticks. No explanation. Just raw JSON:
+Return ONLY raw JSON, no markdown, no backticks, no explanation:
 {"transcript":"what the user said","amount":500,"description":"dinner","category":"🍽️ Food","paidBy":"You","people":["Rahul","Ananya"],"type":"personal","groupName":""}
 
 category must be exactly one of:
@@ -126,5 +125,5 @@ category must be exactly one of:
 
 paidBy is "You" if user said "I paid" or just "paid"
 people lists everyone who owes — NOT the payer
-groupName is the group or trip name if mentioned, else empty string ""`
+groupName is the group or trip name if mentioned, else ""`
 }
