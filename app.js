@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════
-// PASTE YOUR KEYS HERE — all 3 required
+// SUPABASE KEYS — paste yours here
 // ═══════════════════════════════════════════════
-const SUPABASE_URL     = 'https://atfivtjagvavbzfabpez.supabase.co'
+const SUPABASE_URL      = 'https://atfivtjagvavbzfabpez.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Zml2dGphZ3ZhdmJ6ZmFicGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NDA4NjksImV4cCI6MjA5ODIxNjg2OX0.xtC_PTi13XL4fJoeDKRcX2nBQj_xh3HldVFvGrovqs8'
-const GEMINI_API_KEY   = 'AQ.Ab8RN6KiT3G7XrZvo4zNJ7d-7o6ilMmOAipIScKwatK4RGryGw'
+// NOTE: Gemini API key is now stored securely on Vercel server
+// Go to Vercel → your project → Settings → Environment Variables
+// Add: GEMINI_API_KEY = your AQ. key
 // ═══════════════════════════════════════════════
 
 const { createClient } = supabase
@@ -12,9 +14,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 // ── State ─────────────────────────────────────
 let currentUser = null
 let isRecording = false
-let mediaRecorder = null
-let audioChunks = []
-let expenses = [] // local list for the feed
+let expenses = []
 
 // ── Page routing ──────────────────────────────
 
@@ -143,9 +143,10 @@ function showTab(name) {
   event.target.classList.add('active')
 }
 
-// ── Voice recording ───────────────────────────
+// ── VOICE RECORDING ───────────────────────────
+// Records actual audio and sends to Gemini for transcription
 
-async function toggleRecording() {
+function toggleRecording() {
   if (!isRecording) {
     startRecording()
   } else {
@@ -154,113 +155,82 @@ async function toggleRecording() {
 }
 
 async function startRecording() {
-  // Ask for microphone permission
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    audioChunks = []
-    mediaRecorder = new MediaRecorder(stream)
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+    window._mediaRecorder = mediaRecorder
+    window._audioChunks = []
 
     mediaRecorder.ondataavailable = e => {
-      if (e.data.size > 0) audioChunks.push(e.data)
+      if (e.data.size > 0) window._audioChunks.push(e.data)
     }
 
     mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
-      stream.getTracks().forEach(t => t.stop()) // stop mic
-      await transcribeAndParse(audioBlob)
+      stream.getTracks().forEach(t => t.stop())
+      const audioBlob = new Blob(window._audioChunks, { type: 'audio/webm' })
+      await sendVoiceToGemini(audioBlob)
     }
 
     mediaRecorder.start()
     isRecording = true
 
-    // Update UI
     document.getElementById('mic-button').classList.add('recording')
     document.getElementById('mic-icon').textContent = '⏹️'
     document.getElementById('recording-status').classList.remove('hidden')
 
   } catch (err) {
-    alert('Microphone access denied. Please allow microphone access in your browser and try again.')
+    alert('Microphone access denied. Please allow microphone access in your browser settings.')
   }
 }
 
 function stopRecording() {
-  if (mediaRecorder && isRecording) {
-    mediaRecorder.stop()
+  if (window._mediaRecorder && isRecording) {
+    window._mediaRecorder.stop()
     isRecording = false
-
-    // Update UI
     document.getElementById('mic-button').classList.remove('recording')
     document.getElementById('mic-icon').textContent = '🎙️'
     document.getElementById('recording-status').classList.add('hidden')
   }
 }
 
-// ── Transcribe audio with Gemini ──────────────
+// ── Send voice audio to Vercel → Gemini ───────
 
-async function transcribeAndParse(audioBlob) {
+async function sendVoiceToGemini(audioBlob) {
   showThinking(true)
 
   try {
     // Convert audio blob to base64
     const base64Audio = await blobToBase64(audioBlob)
-    const base64Data = base64Audio.split(',')[1]
+    const audioBase64 = base64Audio.split(',')[1] // remove data:audio/webm;base64, prefix
 
-    // Send to Gemini for transcription + parsing in one shot
-    const prompt = `You are an expense parsing AI for an app called Spliq.
-The user has recorded a voice note logging an expense.
-Listen to the audio and extract the expense details.
-Also note: "I paid" and "paid" mean the same thing — the current user paid.
-
-Return ONLY a JSON object with these exact fields (no other text):
-{
-  "transcript": "what the user said",
-  "amount": 500,
-  "description": "dinner",
-  "category": "🍽️ Food",
-  "paidBy": "You",
-  "people": ["Rahul", "Ananya"],
-  "type": "personal",
-  "groupName": ""
-}
-
-Category must be one of: 🍽️ Food, 🚗 Travel, 🏨 Accommodation, 🎉 Entertainment, 🛒 Groceries, 💡 Utilities, 🧾 General
-Type must be "personal" if just 1-2 people, "group" if a named group or 3+ people
-paidBy should be "You" if the user said "I paid" or "paid"
-people should list everyone EXCEPT the payer`
-
-const response = await fetch(
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': GEMINI_API_KEY
-    },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
+    // Call our Vercel serverless function
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'voice',
+        audioBase64: audioBase64
+      })
     })
-  }
-)
-const data = await response.json()
-console.log('Gemini raw response:', JSON.stringify(data))
-const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 
-             data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim()
-const parsed = extractJSON(cleaned)
-console.log('Parsed result:', parsed)
 
+    const data = await response.json()
     showThinking(false)
-    if (parsed) showConfirmCard(parsed)
-    else alert('Could not understand the audio. Please try again or type it instead.')
+
+    if (data.success && data.expense) {
+      showConfirmCard(data.expense)
+    } else {
+      console.error('Voice parse error:', data)
+      alert('Could not understand the audio. Please try again or type the expense.')
+    }
 
   } catch (err) {
     showThinking(false)
-    console.error(err)
-    alert('Something went wrong. Please try typing the expense instead.')
+    console.error('Voice error:', err)
+    alert('Something went wrong. Please type your expense instead.')
   }
 }
 
-// ── Parse text input with Gemini ──────────────
+// ── TEXT INPUT → Vercel → Gemini ──────────────
 
 async function parseExpenseFromText() {
   const input = document.getElementById('expense-input').value.trim()
@@ -269,63 +239,38 @@ async function parseExpenseFromText() {
   showThinking(true)
 
   try {
-    const prompt = `You are an expense parsing AI for an app called Spliq.
-The user typed: "${input}"
-Note: "I paid" and "paid" mean exactly the same thing — the current user paid.
-
-Return ONLY a JSON object with these exact fields (no other text, no markdown):
-{
-  "transcript": "${input}",
-  "amount": 500,
-  "description": "dinner",
-  "category": "🍽️ Food",
-  "paidBy": "You",
-  "people": ["Rahul", "Ananya"],
-  "type": "personal",
-  "groupName": ""
-}
-
-Category must be one of: 🍽️ Food, 🚗 Travel, 🏨 Accommodation, 🎉 Entertainment, 🛒 Groceries, 💡 Utilities, 🧾 General
-Type is "personal" if 1-2 people involved, "group" if 3+ people or a group name is mentioned
-paidBy is "You" if user said "I paid" or just "paid"
-people lists everyone who owes money (not the payer)
-groupName is the group name if mentioned, otherwise empty string`
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    )
+    // Call our Vercel serverless function
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'text',
+        text: input
+      })
+    })
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    const parsed = extractJSON(text)
-
     showThinking(false)
-    if (parsed) {
-      showConfirmCard(parsed)
+
+    if (data.success && data.expense) {
+      showConfirmCard(data.expense)
       document.getElementById('expense-input').value = ''
     } else {
-      alert('Could not parse that. Try being more specific, e.g. "Paid ₹500 for dinner with Rahul"')
+      console.error('Parse error:', data)
+      alert('Could not parse that. Try: "Paid 500 for dinner with Rahul"')
     }
 
   } catch (err) {
     showThinking(false)
-    console.error(err)
-    alert('Something went wrong. Check your Gemini API key.')
+    console.error('Text parse error:', err)
+    alert('Something went wrong. Please try again.')
   }
 }
 
-// ── Show / hide confirm card ──────────────────
+// ── Show confirm card ─────────────────────────
 
 function showConfirmCard(parsed) {
-  // Fill in all the editable fields
-  document.getElementById('confirm-original').textContent = '"' + parsed.transcript + '"'
+  document.getElementById('confirm-original').textContent = '"' + (parsed.transcript || '') + '"'
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
   document.getElementById('edit-paidby').value = parsed.paidBy || 'You'
@@ -339,7 +284,6 @@ function showConfirmCard(parsed) {
     if (opt.value === parsed.category) { opt.selected = true; break }
   }
 
-  // Show/hide group name field
   toggleGroupField()
 
   // Show split chips
@@ -361,7 +305,6 @@ function toggleGroupField() {
   document.getElementById('group-name-field').style.display = type === 'group' ? 'block' : 'none'
 }
 
-// Add event listener for type dropdown
 document.addEventListener('DOMContentLoaded', () => {
   const typeSelect = document.getElementById('edit-type')
   if (typeSelect) typeSelect.addEventListener('change', toggleGroupField)
@@ -401,20 +344,14 @@ async function confirmExpense() {
     userId: currentUser?.id
   }
 
-  // Save to local list and update feed
   expenses.unshift(expense)
   saveExpensesLocally()
   renderFeed()
-
-  // Hide confirm card
   document.getElementById('confirm-card').classList.add('hidden')
-
-  // Show quick success message
   showSuccessToast(description, amount)
 }
 
-// ── Local storage for expenses ────────────────
-// (Phase 3 will move this to Supabase database)
+// ── Local storage ─────────────────────────────
 
 function saveExpensesLocally() {
   if (!currentUser) return
@@ -437,7 +374,7 @@ function renderFeed() {
 
   feed.innerHTML = expenses.slice(0, 10).map(e => {
     const timeAgo = getTimeAgo(e.timestamp)
-    const peopleText = e.people.length > 0 ? `with ${e.people.join(', ')}` : ''
+    const peopleText = e.people && e.people.length > 0 ? `with ${e.people.join(', ')}` : ''
     const typeTag = e.type === 'group'
       ? `<span class="tag tag-group">👥 ${e.groupName || 'Group'}</span>`
       : `<span class="tag tag-personal">👤 Personal</span>`
@@ -458,7 +395,7 @@ function renderFeed() {
   }).join('')
 }
 
-// ── Landing page demo (no AI, just local parse) ──
+// ── Landing page demo ─────────────────────────
 
 function runDemo() {
   const input = document.getElementById('demo-input').value.trim()
@@ -507,7 +444,6 @@ function parseExpenseLocally(text) {
   const people = names.filter(n => n !== paidBy)
   const total = people.length + 1
   const perPerson = Math.round(amount / total)
-
   const forMatch = text.match(/for\s+(.+?)(?:\s+with|\s+split|\s+among|$)/i)
   const description = forMatch ? forMatch[1] : 'Expense'
 
@@ -525,7 +461,7 @@ function showSuccessToast(description, amount) {
   toast.style.cssText = `
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: #111; color: white; padding: 12px 24px; border-radius: 24px;
-    font-size: 14px; z-index: 9999; font-weight: 500;
+    font-size: 14px; z-index: 9999; font-weight: 500; white-space: nowrap;
   `
   toast.textContent = `✅ Saved: ${description} · ₹${amount.toLocaleString('en-IN')}`
   document.body.appendChild(toast)
@@ -549,26 +485,4 @@ function blobToBase64(blob) {
     reader.onerror = reject
     reader.readAsDataURL(blob)
   })
-}
-
-function extractJSON(text) {
-  if (!text) return null
-  // Remove markdown code blocks
-  text = text.replace(/```json/g, '').replace(/```/g, '').trim()
-  try {
-    return JSON.parse(text)
-  } catch {
-    // Find anything between { and }
-    const match = text.match(/\{[\s\S]*?\}/)
-    if (match) {
-      try { return JSON.parse(match[0]) } catch {}
-    }
-    // Try finding the last { to }
-    const start = text.indexOf('{')
-    const end = text.lastIndexOf('}')
-    if (start !== -1 && end !== -1) {
-      try { return JSON.parse(text.substring(start, end + 1)) } catch {}
-    }
-    return null
-  }
 }
