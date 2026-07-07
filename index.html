@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settl — Don't fill forms. Just talk.</title>
+  <title>Spliq — Don't fill forms. Just talk.</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,95 +12,52 @@
   <!--              LANDING PAGE               -->
   <!-- ═══════════════════════════════════════ -->
   <div id="landing-page">
-
     <nav class="navbar">
-      <div class="logo">Settl</div>
+      <div class="logo">Spliq</div>
       <div class="nav-buttons">
         <button class="btn-ghost" onclick="showModal('login')">Login</button>
         <button class="btn-primary" onclick="showModal('signup')">Sign up free</button>
       </div>
     </nav>
-
     <section class="hero">
       <div class="hero-tag">AI-powered expense splitting</div>
       <h1>Don't fill forms.<br/>Just talk.</h1>
       <p class="hero-sub">Log shared expenses by speaking naturally. AI figures out who owes what — instantly.</p>
-
       <div class="demo-box">
         <div class="demo-label">Try it — no signup needed</div>
         <div class="demo-input-row">
-          <input
-            type="text"
-            id="demo-input"
-            placeholder='e.g. "Paid ₹2,400 for dinner with Rahul and Ananya"'
-            onkeydown="if(event.key==='Enter') runDemo()"
-          />
+          <input type="text" id="demo-input" placeholder='e.g. "Paid ₹2,400 for dinner with Rahul and Ananya"' onkeydown="if(event.key==='Enter') runDemo()" />
           <button class="mic-btn" onclick="runDemo()">→</button>
         </div>
         <div id="demo-result" class="demo-result hidden"></div>
         <div class="demo-hint">Press Enter or click → to see AI parse it</div>
       </div>
-
-      <button class="btn-primary btn-large" onclick="showModal('signup')">
-        Start for free — save your expenses
-      </button>
+      <button class="btn-primary btn-large" onclick="showModal('signup')">Start for free</button>
     </section>
-
     <section class="features">
       <h2>Everything you need. Nothing you don't.</h2>
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🎙️</div>
-          <h3>Voice-first logging</h3>
-          <p>Speak naturally. AI understands amounts, people, and categories without you selecting anything.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🤖</div>
-          <h3>AI-powered parsing</h3>
-          <p>Detects the amount, category, who paid, and who owes — automatically, every time.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">👥</div>
-          <h3>Groups and personal</h3>
-          <p>Track group trips and private payments separately. Your personal deals stay private.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>Relationship insights</h3>
-          <p>See who pays first, who delays, and your biggest spending categories across all groups.</p>
-        </div>
+        <div class="feature-card"><div class="feature-icon">🎙️</div><h3>Voice-first logging</h3><p>Speak naturally. AI understands amounts, people, and categories without you selecting anything.</p></div>
+        <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI-powered parsing</h3><p>Detects the amount, category, who paid, and who owes — automatically, every time.</p></div>
+        <div class="feature-card"><div class="feature-icon">👥</div><h3>Groups and personal</h3><p>Track group trips and private payments separately. Your personal deals stay private.</p></div>
+        <div class="feature-card"><div class="feature-icon">📊</div><h3>Relationship insights</h3><p>See who pays first, who delays, and your biggest spending categories across all groups.</p></div>
       </div>
     </section>
-
     <section class="how-it-works">
       <h2>How it works</h2>
       <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Speak or type</h3>
-          <p>Say what you paid, who was there, and how much. That's it.</p>
-        </div>
+        <div class="step"><div class="step-number">1</div><h3>Speak or type</h3><p>Say what you paid, who was there, and how much.</p></div>
         <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>AI parses instantly</h3>
-          <p>Settl detects the amount, members, category and where to log it.</p>
-        </div>
+        <div class="step"><div class="step-number">2</div><h3>AI parses instantly</h3><p>Spliq detects the amount, members, category and where to log it.</p></div>
         <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Logged in seconds</h3>
-          <p>Confirm with one tap. Balances update for everyone automatically.</p>
-        </div>
+        <div class="step"><div class="step-number">3</div><h3>Logged in seconds</h3><p>Confirm with one tap. Balances update automatically.</p></div>
       </div>
     </section>
-
     <footer class="footer">
-      <div class="footer-logo">Settl</div>
+      <div class="footer-logo">Spliq</div>
       <p>Don't fill forms. Just talk.</p>
-      <p class="footer-email">📧 hello@Settl.app</p>
+      <p class="footer-email">📧 hello@spliq.app</p>
     </footer>
-
   </div>
 
   <!-- ═══════════════════════════════════════ -->
@@ -111,36 +68,20 @@
       <div id="form-login">
         <button class="modal-close" onclick="closeModal()">✕</button>
         <h2>Welcome back</h2>
-        <p class="modal-sub">Log in to your Settl account</p>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="login-email" placeholder="you@email.com" />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="login-password" placeholder="Your password" />
-        </div>
+        <p class="modal-sub">Log in to your Spliq account</p>
+        <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com" /></div>
+        <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Your password" /></div>
         <div id="login-error" class="error-msg hidden"></div>
         <button class="btn-primary btn-full" onclick="handleLogin()">Log in</button>
         <p class="modal-switch">No account? <span onclick="showModal('signup')">Sign up</span></p>
       </div>
-
       <div id="form-signup" class="hidden">
         <button class="modal-close" onclick="closeModal()">✕</button>
         <h2>Create your account</h2>
         <p class="modal-sub">Free forever for small groups</p>
-        <div class="form-group">
-          <label>Your name</label>
-          <input type="text" id="signup-name" placeholder="Rahul Sharma" />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="signup-email" placeholder="you@email.com" />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="signup-password" placeholder="At least 6 characters" />
-        </div>
+        <div class="form-group"><label>Your name</label><input type="text" id="signup-name" placeholder="Rahul Sharma" /></div>
+        <div class="form-group"><label>Email</label><input type="email" id="signup-email" placeholder="you@email.com" /></div>
+        <div class="form-group"><label>Password</label><input type="password" id="signup-password" placeholder="At least 6 characters" /></div>
         <div id="signup-error" class="error-msg hidden"></div>
         <button class="btn-primary btn-full" onclick="handleSignup()">Create account</button>
         <p class="modal-switch">Already have an account? <span onclick="showModal('login')">Log in</span></p>
@@ -152,146 +93,157 @@
   <!--                MAIN APP                 -->
   <!-- ═══════════════════════════════════════ -->
   <div id="app-page" class="hidden">
-
-    <!-- Top navbar -->
     <nav class="navbar">
-      <div class="logo">Settl</div>
+      <div class="logo">Spliq</div>
       <div class="nav-buttons">
         <span id="user-greeting" class="user-name"></span>
         <button class="btn-ghost" onclick="handleLogout()">Log out</button>
       </div>
     </nav>
-
-    <!-- Tab bar -->
     <div class="tab-bar">
-      <button class="tab-btn active" onclick="showTab('log')">🎙️ Log</button>
-      <button class="tab-btn" onclick="showTab('groups')">👥 Groups</button>
-      <button class="tab-btn" onclick="showTab('friends')">🤝 Friends</button>
-      <button class="tab-btn" onclick="showTab('insights')">📊 Insights</button>
+      <button class="tab-btn active" onclick="showTab('log', this)">🎙️ Log</button>
+      <button class="tab-btn" onclick="showTab('groups', this)">👥 Groups</button>
+      <button class="tab-btn" onclick="showTab('friends', this)">🤝 Friends</button>
+      <button class="tab-btn" onclick="showTab('insights', this)">📊 Insights</button>
     </div>
 
     <!-- ── TAB 1: LOG ── -->
     <div id="tab-log" class="tab-content">
       <div class="log-container">
-
         <p class="log-hint">Tap the mic and speak, or type below</p>
-
-        <!-- Big mic button -->
         <div id="mic-button" class="big-mic" onclick="toggleRecording()">
           <span id="mic-icon">🎙️</span>
         </div>
         <div id="recording-status" class="recording-status hidden">Listening... tap again to stop</div>
-
-        <!-- Text input -->
         <div class="text-input-row">
-          <input
-            type="text"
-            id="expense-input"
-            placeholder='Or type: "Paid ₹500 for dinner with Rahul"'
-            onkeydown="if(event.key==='Enter') parseExpenseFromText()"
-          />
+          <input type="text" id="expense-input" placeholder='Or type: "Paid ₹500 for dinner with Rahul"' onkeydown="if(event.key==='Enter') parseExpenseFromText()" />
           <button class="send-btn" onclick="parseExpenseFromText()">→</button>
         </div>
-
-        <!-- AI thinking indicator -->
         <div id="ai-thinking" class="ai-thinking hidden">
-          <div class="thinking-dot"></div>
-          <div class="thinking-dot"></div>
-          <div class="thinking-dot"></div>
+          <div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div>
           <span>AI is parsing...</span>
         </div>
-
-        <!-- Confirmation card -->
         <div id="confirm-card" class="confirm-card hidden">
           <div class="confirm-header">✨ AI understood this</div>
           <div class="confirm-original" id="confirm-original"></div>
-
-          <div class="confirm-field">
-            <label>Amount (₹)</label>
-            <input type="number" id="edit-amount" />
-          </div>
-          <div class="confirm-field">
-            <label>Description</label>
-            <input type="text" id="edit-description" />
-          </div>
+          <div class="confirm-field"><label>Amount (₹)</label><input type="number" id="edit-amount" /></div>
+          <div class="confirm-field"><label>Description</label><input type="text" id="edit-description" /></div>
           <div class="confirm-field">
             <label>Category</label>
             <select id="edit-category">
-              <option>🍽️ Food</option>
-              <option>🚗 Travel</option>
-              <option>🏨 Accommodation</option>
-              <option>🎉 Entertainment</option>
-              <option>🛒 Groceries</option>
-              <option>💡 Utilities</option>
-              <option>🧾 General</option>
+              <option>🍽️ Food</option><option>🚗 Travel</option><option>🏨 Accommodation</option>
+              <option>🎉 Entertainment</option><option>🛒 Groceries</option><option>💡 Utilities</option><option>🧾 General</option>
             </select>
           </div>
-          <div class="confirm-field">
-            <label>Who paid</label>
-            <input type="text" id="edit-paidby" />
-          </div>
-          <div class="confirm-field">
-            <label>Split with (names, comma separated)</label>
-            <input type="text" id="edit-people" />
-          </div>
+          <div class="confirm-field"><label>Who paid</label><input type="text" id="edit-paidby" /></div>
+          <div class="confirm-field"><label>Split with (names, comma separated)</label><input type="text" id="edit-people" /></div>
           <div class="confirm-field">
             <label>Log this as</label>
-            <select id="edit-type">
-              <option value="personal">👤 Personal (just between friends)</option>
+            <select id="edit-type" onchange="toggleGroupField()">
+              <option value="personal">👤 Personal</option>
               <option value="group">👥 Group expense</option>
             </select>
           </div>
-          <div class="confirm-field" id="group-name-field" style="display:none">
-            <label>Group name</label>
-            <input type="text" id="edit-group" placeholder="e.g. Goa Trip" />
+          <div class="confirm-field" id="group-select-field" style="display:none">
+            <label>Select group</label>
+            <select id="edit-group-id"><option value="">-- select a group --</option></select>
           </div>
-
           <div class="confirm-split" id="confirm-split"></div>
-
           <div class="confirm-buttons">
             <button class="btn-confirm" onclick="confirmExpense()">✅ Confirm & save</button>
             <button class="btn-cancel" onclick="cancelConfirm()">✕ Cancel</button>
           </div>
         </div>
-
-        <!-- Recent activity feed -->
         <div class="feed-section">
           <div class="feed-label">Recent expenses</div>
-          <div id="expense-feed">
-            <div class="feed-empty">No expenses yet. Tap the mic to log your first one!</div>
-          </div>
+          <div id="expense-feed"><div class="feed-empty">No expenses yet. Tap the mic to log your first one!</div></div>
         </div>
-
       </div>
     </div>
 
-    <!-- ── TAB 2: GROUPS (Phase 3) ── -->
+    <!-- ── TAB 2: GROUPS ── -->
     <div id="tab-groups" class="tab-content hidden">
-      <div class="coming-soon">
-        <div class="cs-icon">👥</div>
-        <h2>Groups</h2>
-        <p>Coming in Phase 3 — create groups, invite friends, and track shared expenses together.</p>
+      <div class="section-container">
+        <div class="section-header">
+          <h2>Your groups</h2>
+          <button class="btn-primary" onclick="showCreateGroup()">+ New group</button>
+        </div>
+        <div id="groups-list"><div class="feed-empty">No groups yet. Create one!</div></div>
+      </div>
+
+      <!-- Create group modal -->
+      <div id="create-group-modal" class="modal-overlay hidden" onclick="closeCreateGroup()">
+        <div class="modal" onclick="event.stopPropagation()">
+          <button class="modal-close" onclick="closeCreateGroup()">✕</button>
+          <h2>Create a group</h2>
+          <p class="modal-sub">Add a name and invite your friends</p>
+          <div class="form-group">
+            <label>Group name</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="group-emoji" value="👥" style="width:52px;text-align:center" />
+              <input type="text" id="group-name" placeholder="Goa Trip, Flat, College Squad..." style="flex:1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Add members (one per line: Name, email)</label>
+            <textarea id="group-members-input" rows="4" placeholder="Rahul, rahul@email.com&#10;Ananya, ananya@email.com" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;resize:vertical"></textarea>
+          </div>
+          <div id="group-error" class="error-msg hidden"></div>
+          <button class="btn-primary btn-full" onclick="createGroup()">Create group</button>
+        </div>
+      </div>
+
+      <!-- Group detail view -->
+      <div id="group-detail" class="hidden">
+        <div class="section-container">
+          <div class="section-header">
+            <button class="btn-ghost" onclick="closeGroupDetail()">← Back</button>
+            <h2 id="group-detail-name"></h2>
+          </div>
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="showSubTab('group-expenses', this)">Expenses</button>
+            <button class="sub-tab" onclick="showSubTab('group-balances', this)">Balances</button>
+          </div>
+          <div id="group-expenses"><div class="feed-empty">No expenses in this group yet.</div></div>
+          <div id="group-balances" class="hidden"></div>
+        </div>
       </div>
     </div>
 
-    <!-- ── TAB 3: FRIENDS (Phase 3) ── -->
+    <!-- ── TAB 3: FRIENDS ── -->
     <div id="tab-friends" class="tab-content hidden">
-      <div class="coming-soon">
-        <div class="cs-icon">🤝</div>
-        <h2>Friends</h2>
-        <p>Coming in Phase 3 — see combined balances with every friend across all groups and personal transactions.</p>
+      <div class="section-container">
+        <div class="section-header"><h2>Friends</h2></div>
+        <p style="font-size:13px;color:#999;margin-bottom:16px">Everyone you've ever split with — across all groups and personal expenses.</p>
+        <div id="friends-list"><div class="feed-empty">No friends yet. Log an expense with someone to see them here!</div></div>
+      </div>
+
+      <!-- Friend detail view -->
+      <div id="friend-detail" class="hidden">
+        <div class="section-container">
+          <div class="section-header">
+            <button class="btn-ghost" onclick="closeFriendDetail()">← Back</button>
+            <h2 id="friend-detail-name"></h2>
+          </div>
+          <div id="friend-balance-summary" class="balance-summary-card"></div>
+          <div class="sub-tabs">
+            <button class="sub-tab active" onclick="showSubTab('friend-expenses', this)">All transactions</button>
+          </div>
+          <div id="friend-expenses"></div>
+          <button id="remind-btn" class="btn-remind hidden" onclick="sendReminder()">🔔 Send reminder</button>
+        </div>
       </div>
     </div>
 
-    <!-- ── TAB 4: INSIGHTS (Phase 4) ── -->
+    <!-- ── TAB 4: INSIGHTS ── -->
     <div id="tab-insights" class="tab-content hidden">
-      <div class="coming-soon">
-        <div class="cs-icon">📊</div>
-        <h2>Insights</h2>
-        <p>Coming in Phase 4 — your personal spending dashboard across all groups and friends.</p>
+      <div class="section-container">
+        <div class="section-header"><h2>My Insights</h2></div>
+        <div class="insights-grid" id="insights-content">
+          <div class="feed-empty">Log some expenses to see your insights!</div>
+        </div>
       </div>
     </div>
-
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
