@@ -87,7 +87,22 @@ GROUPS
 GENERAL
 - Extract the rupee amount.
 - Recognize Indian names.
+Return ONLY raw JSON, no markdown, no backticks, no explanation whatsoever:
+{"transcript":"${transcript}","amount":500,"description":"dinner","category":"🍽️ Food","paidBy":"You","people":["Rahul","Ananya"],"type":"personal","groupName":""}
 
+category must be exactly one of:
+🍽️ Food, 🚗 Travel, 🏨 Accommodation, 🎉 Entertainment, 🛒 Groceries, 💡 Utilities, 🧾 General
+
+paidBy is the person who actually paid.
+If the sentence begins with "I paid", "Paid", or "paid", use "You".
+If a person's name appears immediately before the word "paid", use that person's name.
+
+people contains ONLY the people who owe money.
+Never include the payer in the people array.
+
+groupName is the group or trip name if mentioned, else ""
+
+`
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
