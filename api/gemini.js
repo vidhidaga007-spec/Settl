@@ -64,21 +64,29 @@ export default async function handler(req, res) {
 The user said or typed: "${transcript}"
 
 RULES:
-- "paid", "I paid", "i paid" all mean the current user (You) paid
-- Extract the rupee amount — ignore ₹ or Rs symbols
-- Be smart about Indian names like Rahul, Ananya, Priya, Rohan, Karan, Vijay, Arjun etc.
-- If no people are mentioned, people array should be empty []
-- type is "group" if 3+ people or a group/trip name is mentioned, else "personal"
 
-Return ONLY raw JSON, no markdown, no backticks, no explanation whatsoever:
-{"transcript":"${transcript}","amount":500,"description":"dinner","category":"🍽️ Food","paidBy":"You","people":["Rahul","Ananya"],"type":"personal","groupName":""}
+WHO PAID
+- If the sentence starts with "I paid", "i paid", "Paid", "paid", "I've paid", the payer is "You".
+- If a person's name comes immediately before the word "paid", that person is the payer.
+  Example:
+  "Khushi paid 500" → paidBy = "Khushi"
+  "Rahul paid for dinner" → paidBy = "Rahul"
+- Never put the payer inside the people array.
 
-category must be exactly one of:
-🍽️ Food, 🚗 Travel, 🏨 Accommodation, 🎉 Entertainment, 🛒 Groceries, 💡 Utilities, 🧾 General
+PEOPLE
+- people contains ONLY the people who owe money.
+- If no other people are mentioned, return [].
+- If the payer is Khushi and nobody else is mentioned, return:
+  paidBy = "Khushi"
+  people = []
 
-paidBy is "You" if user said "I paid" or just "paid"
-people lists everyone who owes — NOT the payer
-groupName is the group or trip name if mentioned, else ""`
+GROUPS
+- type is "group" only if a group/trip name is mentioned.
+- Otherwise type is "personal".
+
+GENERAL
+- Extract the rupee amount.
+- Recognize Indian names.
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
