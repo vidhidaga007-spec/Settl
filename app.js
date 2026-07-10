@@ -62,11 +62,29 @@ async function ensureSelfPerson() {
 async function resolvePerson(name, email = '') {
   const trimmedName = (name || '').trim()
   if (!trimmedName) return null
-  if (trimmedName === 'You' || trimmedName.toLowerCase() === currentUserName.toLowerCase()) {
+
+  const lower = trimmedName.toLowerCase()
+
+  if (
+    lower === 'you' ||
+    lower === 'i' ||
+    lower === 'me' ||
+    lower === 'myself' ||
+    lower === currentUserName.toLowerCase()
+  ) {
     return selfPersonId
   }
-  const { data, error } = await db.rpc('upsert_person', { p_name: trimmedName, p_email: email || null })
-  if (error) { console.error('resolvePerson error:', error); return null }
+
+  const { data, error } = await db.rpc('upsert_person', {
+    p_name: trimmedName,
+    p_email: email || null
+  })
+
+  if (error) {
+    console.error('resolvePerson error:', error)
+    return null
+  }
+
   return data
 }
 
@@ -297,9 +315,17 @@ function cancelConfirm() {
 
 async function confirmExpense() {
   const amount = parseFloat(document.getElementById('edit-amount').value)
-  const description = document.getElementById('edit-description').value.trim()
-  const category = document.getElementById('edit-category').value
-  const paidByName = document.getElementById('edit-paidby').value.trim() || 'You'
+const description = document.getElementById('edit-description').value.trim()
+const category = document.getElementById('edit-category').value
+
+let paidByName = document.getElementById('edit-paidby').value.trim()
+
+if (
+  !paidByName ||
+  ['i', 'me', 'myself', 'you'].includes(paidByName.toLowerCase())
+) {
+  paidByName = currentUserName
+}
   const peopleRaw = document.getElementById('edit-people').value.trim()
   const peopleNames = peopleRaw ? peopleRaw.split(',').map(p => p.trim()).filter(Boolean) : []
   const type = document.getElementById('edit-type').value
@@ -376,7 +402,7 @@ async function loadExpenses() {
     const splits = e.expense_splits || []
     return {
       ...e,
-      paid_by: e.payer?.id === selfPersonId ? 'You' : (e.payer?.name || 'Unknown'),
+      paid_by: e.payer?.name || currentUserName,
       paid_by_person_id_resolved: e.payer?.id || null,
       people: splits.map(s => s.people?.name).filter(Boolean),
       per_person: splits.length > 0 ? Number(splits[0].amount_owed) : Number(e.amount),
