@@ -1,8 +1,9 @@
+
 // ═══════════════════════════════════════════════
 // PASTE YOUR SUPABASE KEYS HERE
 // ═══════════════════════════════════════════════
 const SUPABASE_URL      = 'https://atfivtjagvavbzfabpez.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Zml2dGphZ3ZhdmJ6ZmFicGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NDA4NjksImV4cCI6MjA5ODIxNjg2OX0.xtC_PTi13XL4fJoeDKRcX2nBQj_xh3HldVFvGrovqs8'
+const SUPABASE_ANON_KEY = 'sb_publishable_uI2JCH8xM35sd18ZhLpCig_XO_MPTNG'
 // ═══════════════════════════════════════════════
 
 const { createClient } = supabase
@@ -119,15 +120,10 @@ function showTab(name, btn) {
 }
 
 function showSubTab(id, btn) {
-  const parent = btn.closest('.section-container') || btn.closest('.tab-content')
-  parent.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'))
+  btn.closest('.section-container').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  // hide sibling sub-tab panels
   const panels = ['group-expenses','group-balances','friend-expenses']
-  panels.forEach(p => {
-    const el = document.getElementById(p)
-    if (el) el.classList.add('hidden')
-  })
+  panels.forEach(p => { const el = document.getElementById(p); if (el) el.classList.add('hidden') })
   const el = document.getElementById(id)
   if (el) el.classList.remove('hidden')
 }
@@ -243,6 +239,12 @@ function showConfirmCard(parsed) {
     groupSelect.appendChild(opt)
   })
 
+  // Auto-select group if name matches
+  if (parsed.groupName) {
+    const match = allGroups.find(g => g.name.toLowerCase().includes(parsed.groupName.toLowerCase()))
+    if (match) groupSelect.value = match.id
+  }
+
   toggleGroupField()
 
   // Split chips
@@ -299,10 +301,8 @@ async function confirmExpense() {
 
   if (error) { alert('Error saving expense: ' + error.message); return }
 
-  // Save contacts (friends memory)
   await saveContacts(people)
 
-  // Check if reminders needed (auto 7-day reminder setup)
   if (people.length > 0) {
     await setupReminders(data[0].id, people, amount, perPerson)
   }
@@ -312,7 +312,6 @@ async function confirmExpense() {
   showSuccessToast(description, amount)
 }
 
-// Save all people mentioned as contacts
 async function saveContacts(people) {
   for (const name of people) {
     await db.from('contacts').upsert([{
@@ -322,7 +321,6 @@ async function saveContacts(people) {
   }
 }
 
-// Setup 7-day auto reminders
 async function setupReminders(expenseId, people, amount, perPerson) {
   const reminders = people.map(name => ({
     from_user_id: currentUser.id,
@@ -335,7 +333,7 @@ async function setupReminders(expenseId, people, amount, perPerson) {
 }
 
 // ══════════════════════════════════════════════
-// LOAD EXPENSES FROM SUPABASE
+// LOAD EXPENSES
 // ══════════════════════════════════════════════
 
 async function loadExpenses() {
@@ -343,7 +341,6 @@ async function loadExpenses() {
     .select('*')
     .eq('created_by', currentUser.id)
     .order('created_at', { ascending: false })
-
   if (error) { console.error('Load expenses error:', error); return }
   allExpenses = data || []
   renderFeed()
@@ -380,7 +377,7 @@ function expenseCard(e) {
 }
 
 // ══════════════════════════════════════════════
-// GROUPS — PHASE 3
+// GROUPS
 // ══════════════════════════════════════════════
 
 async function loadGroups() {
@@ -393,10 +390,12 @@ async function loadGroups() {
 }
 
 function renderGroups() {
-  const list = document.getElementById('groups-list')
   document.getElementById('group-detail').classList.add('hidden')
-  document.getElementById('groups-list').parentElement.querySelector('.section-header').style.display = 'flex'
+  document.getElementById('groups-list').classList.remove('hidden')
+  const header = document.querySelector('#tab-groups .section-header')
+  if (header) header.style.display = 'flex'
 
+  const list = document.getElementById('groups-list')
   if (allGroups.length === 0) {
     list.innerHTML = '<div class="feed-empty">No groups yet. Create one to split expenses with friends!</div>'
     return
@@ -416,20 +415,54 @@ function renderGroups() {
           <div class="group-arrow">›</div>
         </div>
         <div class="member-chips">
-          ${members.slice(0, 4).map(m => `<span class="member-chip">${m.name[0]}</span>`).join('')}
-          ${members.length > 4 ? `<span class="member-chip">+${members.length - 4}</span>` : ''}
+          ${members.slice(0, 5).map(m => `<span class="member-chip" title="${m.name}">${m.name[0].toUpperCase()}</span>`).join('')}
+          ${members.length > 5 ? `<span class="member-chip">+${members.length - 5}</span>` : ''}
         </div>
       </div>
     `
   }).join('')
 }
 
+// ── Create group ──────────────────────────────
+
 function showCreateGroup() {
   document.getElementById('create-group-modal').classList.remove('hidden')
+  document.getElementById('member-tags').innerHTML = ''
+  document.getElementById('member-input').value = ''
+  document.getElementById('group-name').value = ''
+  document.getElementById('group-emoji').value = '👥'
 }
 
 function closeCreateGroup() {
   document.getElementById('create-group-modal').classList.add('hidden')
+}
+
+function addMemberTag() {
+  const input = document.getElementById('member-input')
+  const name = input.value.trim()
+  if (!name) return
+
+  // Don't add duplicates
+  const existing = document.querySelectorAll('.member-tag')
+  for (const tag of existing) {
+    if (tag.dataset.name.toLowerCase() === name.toLowerCase()) {
+      input.value = ''
+      return
+    }
+  }
+
+  const tagsDiv = document.getElementById('member-tags')
+  const tag = document.createElement('div')
+  tag.className = 'member-tag'
+  tag.dataset.name = name
+  tag.innerHTML = `
+    <span class="member-tag-avatar">${name[0].toUpperCase()}</span>
+    <span>${name}</span>
+    <span class="member-tag-remove" onclick="this.parentElement.remove()">✕</span>
+  `
+  tagsDiv.appendChild(tag)
+  input.value = ''
+  input.focus()
 }
 
 async function createGroup() {
@@ -453,7 +486,7 @@ async function createGroup() {
 
   const groupId = groupData[0].id
 
-  // Always add creator first
+  // Always add creator as first member
   const members = [{
     group_id: groupId,
     user_id: currentUser.id,
@@ -461,11 +494,11 @@ async function createGroup() {
     email: currentUser.email
   }]
 
-  // Get members from tag list
+  // Add tagged members
   const tagEls = document.querySelectorAll('.member-tag')
   tagEls.forEach(tag => {
     const memberName = tag.dataset.name
-    if (memberName && memberName !== currentUserName) {
+    if (memberName) {
       members.push({
         group_id: groupId,
         user_id: null,
@@ -476,21 +509,23 @@ async function createGroup() {
   })
 
   const { error: memberError } = await db.from('group_members').insert(members)
-  if (memberError) console.error('Member insert error:', memberError)
+  if (memberError) {
+    console.error('Member insert error:', memberError)
+    showError('group-error', 'Group created but members failed to save: ' + memberError.message)
+  }
 
   // Save to contacts
-  members.filter(m => m.user_id !== currentUser.id).forEach(m => saveContacts([m.name]))
+  const friendNames = members.filter(m => m.user_id !== currentUser.id).map(m => m.name)
+  if (friendNames.length > 0) await saveContacts(friendNames)
 
   btn.textContent = 'Create group'; btn.disabled = false
   closeCreateGroup()
-  document.getElementById('group-name').value = ''
-  document.getElementById('group-emoji').value = '👥'
-  document.getElementById('member-tags').innerHTML = ''
-
   await loadGroups()
   renderGroups()
   showSuccessToast(name, 0, true)
 }
+
+// ── Group detail ──────────────────────────────
 
 async function openGroupDetail(groupId) {
   currentGroupId = groupId
@@ -498,21 +533,20 @@ async function openGroupDetail(groupId) {
   if (!group) return
 
   document.getElementById('groups-list').classList.add('hidden')
-  document.querySelector('#tab-groups .section-header').style.display = 'none'
+  const header = document.querySelector('#tab-groups .section-header')
+  if (header) header.style.display = 'none'
   document.getElementById('group-detail').classList.remove('hidden')
   document.getElementById('group-detail-name').textContent = group.emoji + ' ' + group.name
 
-  // Load group expenses
   const groupExpenses = allExpenses.filter(e => e.group_id === groupId)
   const expensesDiv = document.getElementById('group-expenses')
 
   if (groupExpenses.length === 0) {
-    expensesDiv.innerHTML = '<div class="feed-empty">No expenses in this group yet.</div>'
+    expensesDiv.innerHTML = '<div class="feed-empty">No expenses in this group yet. Log one from the Log tab!</div>'
   } else {
     expensesDiv.innerHTML = groupExpenses.map(e => expenseCard(e)).join('')
   }
 
-  // Calculate balances
   renderGroupBalances(group, groupExpenses)
 }
 
@@ -525,11 +559,9 @@ function renderGroupBalances(group, groupExpenses) {
     const people = e.people || []
     const total = people.length + 1
     const perPerson = Math.round(Number(e.amount) / total)
-    // Payer gets credit
     const payer = e.paid_by
     if (balances[payer] !== undefined) balances[payer] += Number(e.amount) - perPerson
     else balances[payer] = Number(e.amount) - perPerson
-    // Others owe
     people.forEach(p => {
       if (balances[p] !== undefined) balances[p] -= perPerson
       else balances[p] = -perPerson
@@ -546,11 +578,11 @@ function renderGroupBalances(group, groupExpenses) {
   balDiv.innerHTML = entries.map(([name, bal]) => `
     <div class="balance-row">
       <div class="bal-person">
-        <div class="avatar-circle">${name[0]}</div>
+        <div class="avatar-circle">${name[0].toUpperCase()}</div>
         <div class="bal-name">${name}</div>
       </div>
       <div class="bal-amount ${bal >= 0 ? 'owed' : 'owe'}">
-        ${bal >= 0 ? `Gets back ₹${Math.abs(bal).toLocaleString('en-IN')}` : `Owes ₹${Math.abs(bal).toLocaleString('en-IN')}`}
+        ${bal >= 0 ? `Gets back ₹${Math.abs(Math.round(bal)).toLocaleString('en-IN')}` : `Owes ₹${Math.abs(Math.round(bal)).toLocaleString('en-IN')}`}
       </div>
     </div>
   `).join('')
@@ -559,20 +591,21 @@ function renderGroupBalances(group, groupExpenses) {
 function closeGroupDetail() {
   document.getElementById('group-detail').classList.add('hidden')
   document.getElementById('groups-list').classList.remove('hidden')
-  document.querySelector('#tab-groups .section-header').style.display = 'flex'
+  const header = document.querySelector('#tab-groups .section-header')
+  if (header) header.style.display = 'flex'
   currentGroupId = null
 }
 
 // ══════════════════════════════════════════════
-// FRIENDS — PHASE 3
+// FRIENDS
 // ══════════════════════════════════════════════
 
 function renderFriends() {
   document.getElementById('friend-detail').classList.add('hidden')
-  document.getElementById('friends-list').parentElement.querySelector('.section-header').style.display = 'flex'
   document.getElementById('friends-list').classList.remove('hidden')
+  const header = document.querySelector('#tab-friends .section-header')
+  if (header) header.style.display = 'flex'
 
-  // Build unique friends list from all expenses
   const friendMap = {}
   allExpenses.forEach(e => {
     const people = e.people || []
@@ -580,9 +613,10 @@ function renderFriends() {
       if (!friendMap[name]) friendMap[name] = { name, expenses: [], totalOwed: 0 }
       friendMap[name].expenses.push(e)
       const perPerson = Number(e.per_person) || Math.round(Number(e.amount) / (people.length + 1))
-      // They owe you if you paid
       if (e.paid_by === 'You' || e.paid_by === currentUserName) {
         friendMap[name].totalOwed += perPerson
+      } else {
+        friendMap[name].totalOwed -= perPerson
       }
     })
   })
@@ -598,15 +632,15 @@ function renderFriends() {
   list.innerHTML = friends.map(f => {
     const owed = f.totalOwed
     const balText = owed > 0
-      ? `<span class="bal-amount owed">Owes you ₹${owed.toLocaleString('en-IN')}</span>`
+      ? `<span class="bal-amount owed">Owes you ₹${Math.round(owed).toLocaleString('en-IN')}</span>`
       : owed < 0
-      ? `<span class="bal-amount owe">You owe ₹${Math.abs(owed).toLocaleString('en-IN')}</span>`
+      ? `<span class="bal-amount owe">You owe ₹${Math.abs(Math.round(owed)).toLocaleString('en-IN')}</span>`
       : `<span class="bal-amount settled">Settled ✓</span>`
 
     return `
       <div class="friend-card" onclick="openFriendDetail('${f.name}')">
         <div class="friend-card-left">
-          <div class="avatar-circle">${f.name[0]}</div>
+          <div class="avatar-circle">${f.name[0].toUpperCase()}</div>
           <div>
             <div class="friend-name">${f.name}</div>
             <div class="friend-meta">${f.expenses.length} transactions</div>
@@ -621,14 +655,13 @@ function renderFriends() {
 function openFriendDetail(friendName) {
   currentFriendName = friendName
   document.getElementById('friends-list').classList.add('hidden')
-  document.querySelector('#tab-friends .section-header').style.display = 'none'
+  const header = document.querySelector('#tab-friends .section-header')
+  if (header) header.style.display = 'none'
   document.getElementById('friend-detail').classList.remove('hidden')
   document.getElementById('friend-detail-name').textContent = friendName
 
-  // All transactions with this friend
   const friendExpenses = allExpenses.filter(e => (e.people || []).includes(friendName))
 
-  // Calculate total balance
   let totalOwed = 0
   friendExpenses.forEach(e => {
     const people = e.people || []
@@ -637,17 +670,15 @@ function openFriendDetail(friendName) {
     else totalOwed -= perPerson
   })
 
-  // Balance summary card
   const summaryDiv = document.getElementById('friend-balance-summary')
   summaryDiv.innerHTML = `
     <div class="balance-hero ${totalOwed >= 0 ? 'green' : 'red'}">
       <div class="balance-hero-label">${totalOwed >= 0 ? friendName + ' owes you' : 'You owe ' + friendName}</div>
-      <div class="balance-hero-amount">₹${Math.abs(totalOwed).toLocaleString('en-IN')}</div>
+      <div class="balance-hero-amount">₹${Math.abs(Math.round(totalOwed)).toLocaleString('en-IN')}</div>
       <div class="balance-hero-sub">across ${friendExpenses.length} transactions</div>
     </div>
   `
 
-  // Show remind button if they owe you
   const remindBtn = document.getElementById('remind-btn')
   if (totalOwed > 0) {
     remindBtn.classList.remove('hidden')
@@ -656,7 +687,6 @@ function openFriendDetail(friendName) {
     remindBtn.classList.add('hidden')
   }
 
-  // Transaction feed
   const expDiv = document.getElementById('friend-expenses')
   if (friendExpenses.length === 0) {
     expDiv.innerHTML = '<div class="feed-empty">No transactions yet.</div>'
@@ -685,16 +715,15 @@ function openFriendDetail(friendName) {
 function closeFriendDetail() {
   document.getElementById('friend-detail').classList.add('hidden')
   document.getElementById('friends-list').classList.remove('hidden')
-  document.querySelector('#tab-friends .section-header').style.display = 'flex'
+  const header = document.querySelector('#tab-friends .section-header')
+  if (header) header.style.display = 'flex'
   currentFriendName = null
 }
 
-// ── Send reminder (email via mailto) ──────────
 async function sendReminder() {
   const friendName = currentFriendName
   const amount = document.getElementById('remind-btn').dataset.amount
 
-  // Check if we have email for this friend
   const { data: contacts } = await db.from('contacts')
     .select('friend_email')
     .eq('user_id', currentUser.id)
@@ -704,21 +733,16 @@ async function sendReminder() {
   const email = contacts?.friend_email
 
   if (email) {
-    // Open email client with pre-filled reminder
     const subject = encodeURIComponent('Friendly reminder — Spliq')
-    const body = encodeURIComponent(
-      `Hi ${friendName},\n\nJust a friendly reminder that you owe me ₹${Number(amount).toLocaleString('en-IN')} on Spliq.\n\nNo rush, just wanted to check in!\n\n${currentUserName}`
-    )
+    const body = encodeURIComponent(`Hi ${friendName},\n\nJust a friendly reminder that you owe me ₹${Number(amount).toLocaleString('en-IN')} on Spliq.\n\nNo rush, just wanted to check in!\n\n${currentUserName}`)
     window.open(`mailto:${email}?subject=${subject}&body=${body}`)
   } else {
-    // Copy reminder message to clipboard
     const msg = `Hi ${friendName}! Just a reminder that you owe me ₹${Number(amount).toLocaleString('en-IN')} on Spliq 😊`
     navigator.clipboard.writeText(msg).then(() => {
-      showSuccessToast('Reminder message copied to clipboard! Paste it in WhatsApp.', 0, true)
+      showSuccessToast('Reminder copied! Paste it in WhatsApp.', 0, true)
     })
   }
 
-  // Mark reminder as sent in DB
   await db.from('reminders').insert([{
     from_user_id: currentUser.id,
     to_name: friendName,
@@ -728,7 +752,7 @@ async function sendReminder() {
 }
 
 // ══════════════════════════════════════════════
-// INSIGHTS — PHASE 4
+// INSIGHTS
 // ══════════════════════════════════════════════
 
 function renderInsights() {
@@ -739,7 +763,6 @@ function renderInsights() {
     return
   }
 
-  // Total this month
   const now = new Date()
   const thisMonth = allExpenses.filter(e => {
     const d = new Date(e.created_at)
@@ -748,9 +771,7 @@ function renderInsights() {
   const totalMonth = thisMonth.reduce((sum, e) => sum + Number(e.amount), 0)
   const totalAll = allExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
 
-  // Total owed to you
   let totalOwedToYou = 0
-  let totalYouOwe = 0
   allExpenses.forEach(e => {
     const people = e.people || []
     if (people.length === 0) return
@@ -760,14 +781,12 @@ function renderInsights() {
     }
   })
 
-  // Category breakdown
   const catTotals = {}
   allExpenses.forEach(e => {
     catTotals[e.category] = (catTotals[e.category] || 0) + Number(e.amount)
   })
   const topCategory = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0]
 
-  // Friend stats
   const friendCounts = {}
   allExpenses.forEach(e => {
     (e.people || []).forEach(name => {
@@ -776,7 +795,6 @@ function renderInsights() {
   })
   const topFriend = Object.entries(friendCounts).sort((a, b) => b[1] - a[1])[0]
 
-  // Group stats
   const groupTotals = {}
   allExpenses.filter(e => e.type === 'group').forEach(e => {
     const key = e.group_name || 'Group'
@@ -784,7 +802,6 @@ function renderInsights() {
   })
   const topGroup = Object.entries(groupTotals).sort((a, b) => b[1] - a[1])[0]
 
-  // Monthly trend (last 6 months)
   const monthlyData = []
   for (let i = 5; i >= 0; i--) {
     const d = new Date()
@@ -796,17 +813,12 @@ function renderInsights() {
     const total = monthExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
     monthlyData.push({ month: d.toLocaleString('default', { month: 'short' }), total })
   }
-
   const maxMonthly = Math.max(...monthlyData.map(m => m.total), 1)
 
-  // Who pays first
-  const payFirstCount = allExpenses.filter(e =>
-    e.paid_by === 'You' || e.paid_by === currentUserName
-  ).length
+  const payFirstCount = allExpenses.filter(e => e.paid_by === 'You' || e.paid_by === currentUserName).length
   const payFirstPct = Math.round((payFirstCount / allExpenses.length) * 100)
 
   container.innerHTML = `
-    <!-- Summary cards -->
     <div class="insight-row">
       <div class="insight-card">
         <div class="insight-label">This month</div>
@@ -827,8 +839,6 @@ function renderInsights() {
         <div class="insight-value">${allExpenses.length}</div>
       </div>
     </div>
-
-    <!-- Monthly trend -->
     <div class="insight-card-full">
       <div class="insight-label">Monthly spending trend</div>
       <div class="bar-chart">
@@ -841,52 +851,20 @@ function renderInsights() {
         `).join('')}
       </div>
     </div>
-
-    <!-- Category breakdown -->
     <div class="insight-card-full">
       <div class="insight-label">Spending by category</div>
       ${Object.entries(catTotals).sort((a,b) => b[1]-a[1]).map(([cat, amt]) => `
         <div class="cat-row">
           <div class="cat-name">${cat}</div>
-          <div class="cat-bar-wrap">
-            <div class="cat-bar" style="width:${Math.round((amt/totalAll)*100)}%"></div>
-          </div>
+          <div class="cat-bar-wrap"><div class="cat-bar" style="width:${Math.round((amt/totalAll)*100)}%"></div></div>
           <div class="cat-amount">₹${amt.toLocaleString('en-IN')}</div>
         </div>
       `).join('')}
     </div>
-
-    <!-- Fun stats -->
-    ${topFriend ? `
-    <div class="insight-card-full fun-card">
-      <div class="fun-icon">🤝</div>
-      <div class="fun-label">Most frequent co-spender</div>
-      <div class="fun-value">${topFriend[0]}</div>
-      <div class="fun-sub">${topFriend[1]} shared expenses</div>
-    </div>` : ''}
-
-    ${topGroup ? `
-    <div class="insight-card-full fun-card">
-      <div class="fun-icon">👥</div>
-      <div class="fun-label">Biggest spending group</div>
-      <div class="fun-value">${topGroup[0]}</div>
-      <div class="fun-sub">₹${topGroup[1].toLocaleString('en-IN')} total</div>
-    </div>` : ''}
-
-    ${topCategory ? `
-    <div class="insight-card-full fun-card">
-      <div class="fun-icon">🏆</div>
-      <div class="fun-label">Top spending category</div>
-      <div class="fun-value">${topCategory[0]}</div>
-      <div class="fun-sub">₹${topCategory[1].toLocaleString('en-IN')} spent</div>
-    </div>` : ''}
-
-    <div class="insight-card-full fun-card">
-      <div class="fun-icon">⚡</div>
-      <div class="fun-label">You pay first</div>
-      <div class="fun-value">${payFirstPct}% of the time</div>
-      <div class="fun-sub">across all your expenses</div>
-    </div>
+    ${topFriend ? `<div class="insight-card-full fun-card"><div class="fun-icon">🤝</div><div class="fun-label">Most frequent co-spender</div><div class="fun-value">${topFriend[0]}</div><div class="fun-sub">${topFriend[1]} shared expenses</div></div>` : ''}
+    ${topGroup ? `<div class="insight-card-full fun-card"><div class="fun-icon">👥</div><div class="fun-label">Biggest spending group</div><div class="fun-value">${topGroup[0]}</div><div class="fun-sub">₹${topGroup[1].toLocaleString('en-IN')} total</div></div>` : ''}
+    ${topCategory ? `<div class="insight-card-full fun-card"><div class="fun-icon">🏆</div><div class="fun-label">Top spending category</div><div class="fun-value">${topCategory[0]}</div><div class="fun-sub">₹${topCategory[1].toLocaleString('en-IN')} spent</div></div>` : ''}
+    <div class="insight-card-full fun-card"><div class="fun-icon">⚡</div><div class="fun-label">You pay first</div><div class="fun-value">${payFirstPct}% of the time</div><div class="fun-sub">across all your expenses</div></div>
   `
 }
 
@@ -952,9 +930,7 @@ function showThinking(show) {
 function showSuccessToast(description, amount, isGroup = false) {
   const toast = document.createElement('div')
   toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111;color:white;padding:12px 24px;border-radius:24px;font-size:14px;z-index:9999;font-weight:500;white-space:nowrap;`
-  toast.textContent = isGroup
-    ? `✅ Group "${description}" created!`
-    : `✅ Saved: ${description} · ₹${Number(amount).toLocaleString('en-IN')}`
+  toast.textContent = isGroup ? `✅ Group "${description}" created!` : `✅ Saved: ${description} · ₹${Number(amount).toLocaleString('en-IN')}`
   document.body.appendChild(toast)
   setTimeout(() => toast.remove(), 3000)
 }
