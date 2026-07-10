@@ -327,15 +327,35 @@ if (
   paidByName = currentUserName
 }
   const peopleRaw = document.getElementById('edit-people').value.trim()
-  const peopleNames = peopleRaw ? peopleRaw.split(',').map(p => p.trim()).filter(Boolean) : []
-  const type = document.getElementById('edit-type').value
-  const groupId = document.getElementById('edit-group-id').value || null
+let peopleNames = peopleRaw
+  ? peopleRaw.split(',').map(p => p.trim()).filter(Boolean)
+  : []
+
+const type = document.getElementById('edit-type').value
+const groupId = document.getElementById('edit-group-id').value || null
+
+// If this is a group expense and no names were entered,
+// automatically split with everyone else in the group.
+if (type === 'group' && groupId && peopleNames.length === 0) {
+  const group = allGroups.find(g => g.id === groupId)
+
+  if (group) {
+    peopleNames = group.group_members
+      .map(m => m.name)
+      .filter(name => name.toLowerCase() !== currentUserName.toLowerCase())
+  }
+}
   const transcript = document.getElementById('edit-transcript').value || description
   const perPerson = peopleNames.length > 0 ? Math.round(amount / (peopleNames.length + 1)) : amount
 
   if (!amount || !description) { alert('Please fill in at least the amount and description.'); return }
 
-  const paidByPersonId = await resolvePerson(paidByName)
+const paidByPersonId = await resolvePerson(paidByName)
+
+// Never split the bill with the payer.
+peopleNames = peopleNames.filter(
+  name => name.toLowerCase() !== paidByName.toLowerCase()
+)
   if (!paidByPersonId) { alert('Could not resolve who paid. Please try again.'); return }
 
   const splitPeople = []
