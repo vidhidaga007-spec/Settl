@@ -435,23 +435,25 @@ function closeCreateGroup() {
 async function createGroup() {
   const name = document.getElementById('group-name').value.trim()
   const emoji = document.getElementById('group-emoji').value.trim() || '👥'
-  const membersRaw = document.getElementById('group-members-input').value.trim()
 
   if (!name) { showError('group-error', 'Please enter a group name.'); return }
 
   const btn = document.querySelector('#create-group-modal .btn-full')
   btn.textContent = 'Creating...'; btn.disabled = true
 
-  // Create group
   const { data: groupData, error: groupError } = await db.from('groups').insert([{
     name, emoji, created_by: currentUser.id
   }]).select()
 
-  if (groupError) { showError('group-error', 'Error creating group.'); btn.textContent = 'Create group'; btn.disabled = false; return }
+  if (groupError) {
+    showError('group-error', 'Error: ' + groupError.message)
+    btn.textContent = 'Create group'; btn.disabled = false
+    return
+  }
 
   const groupId = groupData[0].id
 
-  // Add creator as member
+  // Always add creator first
   const members = [{
     group_id: groupId,
     user_id: currentUser.id,
@@ -459,30 +461,31 @@ async function createGroup() {
     email: currentUser.email
   }]
 
-  // Parse and add other members
-  if (membersRaw) {
-    membersRaw.split('\n').forEach(line => {
-      const parts = line.split(',').map(p => p.trim())
-      if (parts[0]) {
-        members.push({
-          group_id: groupId,
-          user_id: null,
-          name: parts[0],
-          email: parts[1] || ''
-        })
-        // Save to contacts
-        saveContacts([parts[0]])
-      }
-    })
-  }
+  // Get members from tag list
+  const tagEls = document.querySelectorAll('.member-tag')
+  tagEls.forEach(tag => {
+    const memberName = tag.dataset.name
+    if (memberName && memberName !== currentUserName) {
+      members.push({
+        group_id: groupId,
+        user_id: null,
+        name: memberName,
+        email: ''
+      })
+    }
+  })
 
-  await db.from('group_members').insert(members)
+  const { error: memberError } = await db.from('group_members').insert(members)
+  if (memberError) console.error('Member insert error:', memberError)
+
+  // Save to contacts
+  members.filter(m => m.user_id !== currentUser.id).forEach(m => saveContacts([m.name]))
 
   btn.textContent = 'Create group'; btn.disabled = false
   closeCreateGroup()
   document.getElementById('group-name').value = ''
   document.getElementById('group-emoji').value = '👥'
-  document.getElementById('group-members-input').value = ''
+  document.getElementById('member-tags').innerHTML = ''
 
   await loadGroups()
   renderGroups()
