@@ -60,49 +60,250 @@ export default async function handler(req, res) {
     }
 
     // ── PARSE: extract expense details using Groq LLM ──
-    const prompt = `You are an expense parsing AI for an app called Spliq used in India.
-The user said or typed: "${transcript}"
+    const prompt = `You are Spliq's expense parsing AI.
 
-RULES:
+The user said:
 
-WHO PAID
-- If the sentence starts with "I paid", "i paid", "Paid", "paid", "I've paid", the payer is "You".
-- If a person's name comes immediately before the word "paid", that person is the payer.
-  Example:
-  "Khushi paid 500" → paidBy = "Khushi"
-  "Rahul paid for dinner" → paidBy = "Rahul"
-- Never put the payer inside the people array.
+"${transcript}"
+
+Your job is ONLY to extract information from the sentence.
+
+Do NOT invent people.
+Do NOT invent groups.
+Do NOT guess if information is missing.
+
+----------------------------------------
+RULES
+----------------------------------------
+
+AMOUNT
+Extract the numeric amount.
+
+DESCRIPTION
+Return a short description.
+
+PAID BY
+
+If the sentence begins with:
+
+I paid
+i paid
+Paid
+paid
+I've paid
+
+then
+
+paidBy = "You"
+
+If another person's name appears immediately before "paid",
+
+Example
+
+Khushi paid 500
+
+then
+
+paidBy = "Khushi"
+
+Never include the payer inside the people array.
+
+----------------------------------------
 
 PEOPLE
-- people contains ONLY the people who owe money.
-- If no other people are mentioned, return [].
-- If the payer is Khushi and nobody else is mentioned, return:
-  paidBy = "Khushi"
-  people = []
 
-GROUPS
-- type is "group" only if a group/trip name is mentioned.
-- Otherwise type is "personal".
+Return ONLY the people explicitly mentioned.
 
-GENERAL
-- Extract the rupee amount.
-- Recognize Indian names.
-Return ONLY raw JSON, no markdown, no backticks, no explanation whatsoever:
-{"transcript":"${transcript}","amount":500,"description":"dinner","category":"🍽️ Food","paidBy":"You","people":["Rahul","Ananya"],"type":"personal","groupName":""}
+Recognize phrases like
 
-category must be exactly one of:
-🍽️ Food, 🚗 Travel, 🏨 Accommodation, 🎉 Entertainment, 🛒 Groceries, 💡 Utilities, 🧾 General
+with Rahul
 
-paidBy is the person who actually paid.
-If the sentence begins with "I paid", "Paid", or "paid", use "You".
-If a person's name appears immediately before the word "paid", use that person's name.
+with Rahul and me
 
-people contains ONLY the people who owe money.
-Never include the payer in the people array.
+with Rahul, Khushi and me
 
-groupName is the group or trip name if mentioned, else ""
+between Rahul and Khushi
 
-`
+among Rahul, Khushi and me
+
+split with Rahul
+
+IMPORTANT
+
+"me"
+
+means
+
+"You"
+
+Examples
+
+"I paid with Rahul"
+
+people=["Rahul"]
+
+"Khushi paid with me"
+
+people=["You"]
+
+"Khushi paid with Rahul and me"
+
+people=["Rahul","You"]
+
+If nobody is mentioned
+
+people=[]
+
+----------------------------------------
+
+GROUP
+
+Return the group name ONLY if explicitly mentioned.
+
+Otherwise
+
+groupName=""
+
+Do NOT guess.
+
+----------------------------------------
+
+CATEGORY
+
+Choose ONLY ONE
+
+🍽️ Food
+🚗 Travel
+🏨 Accommodation
+🎉 Entertainment
+🛒 Groceries
+💡 Utilities
+🧾 General
+
+If unsure
+
+return
+
+🧾 General
+
+----------------------------------------
+
+TYPE
+
+Return
+
+"group"
+
+ONLY if the user explicitly mentions a group.
+
+Otherwise
+
+"personal"
+
+----------------------------------------
+
+EXAMPLES
+
+Input:
+I paid 500 for dinner
+
+Output:
+{
+"amount":500,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":[],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+I paid 800 for dinner with Khushi
+
+Output:
+{
+"amount":800,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":["Khushi"],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+Khushi paid 1200 for cake with me
+
+Output:
+{
+"amount":1200,
+"description":"cake",
+"category":"🍽️ Food",
+"paidBy":"Khushi",
+"people":["You"],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+Khushi paid 1600 for cab with Rahul and me
+
+Output:
+{
+"amount":1600,
+"description":"cab",
+"category":"🚗 Travel",
+"paidBy":"Khushi",
+"people":["Rahul","You"],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+Rahul paid 600
+
+Output:
+{
+"amount":600,
+"description":"",
+"category":"🧾 General",
+"paidBy":"Rahul",
+"people":[],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+I paid 2000 for Flat groceries
+
+Output:
+{
+"amount":2000,
+"description":"groceries",
+"category":"🛒 Groceries",
+"paidBy":"You",
+"people":[],
+"type":"group",
+"groupName":"Flat"
+}
+
+----------------------------------------
+
+Return ONLY valid JSON.
+
+Required format:
+
+{
+"transcript":"${transcript}",
+"amount":0,
+"description":"",
+"category":"",
+"paidBy":"",
+"people":[],
+"type":"personal",
+"groupName":""
+}`
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
