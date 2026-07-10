@@ -172,21 +172,26 @@
       </div>
 
       <!-- Create group modal -->
+      <!-- Create group modal -->
       <div id="create-group-modal" class="modal-overlay hidden" onclick="closeCreateGroup()">
         <div class="modal" onclick="event.stopPropagation()">
           <button class="modal-close" onclick="closeCreateGroup()">✕</button>
           <h2>Create a group</h2>
-          <p class="modal-sub">Add a name and invite your friends</p>
+          <p class="modal-sub">Give it a name and add your friends</p>
           <div class="form-group">
             <label>Group name</label>
             <div style="display:flex;gap:8px">
-              <input type="text" id="group-emoji" value="👥" style="width:52px;text-align:center" />
-              <input type="text" id="group-name" placeholder="Goa Trip, Flat, College Squad..." style="flex:1" />
+              <input type="text" id="group-emoji" value="👥" style="width:52px;text-align:center;padding:11px 6px;border:1.5px solid #ddd;border-radius:8px;font-size:18px;outline:none" />
+              <input type="text" id="group-name" placeholder="Goa Trip, Flat, College Squad..." style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" />
             </div>
           </div>
           <div class="form-group">
-            <label>Add members (one per line: Name, email)</label>
-            <textarea id="group-members-input" rows="4" placeholder="Rahul, rahul@email.com&#10;Ananya, ananya@email.com" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;resize:vertical"></textarea>
+            <label>Add members</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="member-input" placeholder="Type a name and press Add" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') addMemberTag()" />
+              <button onclick="addMemberTag()" class="btn-primary" style="padding:10px 16px;white-space:nowrap;border-radius:8px">Add</button>
+            </div>
+            <div id="member-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:10px"></div>
           </div>
           <div id="group-error" class="error-msg hidden"></div>
           <button class="btn-primary btn-full" onclick="createGroup()">Create group</button>
