@@ -217,3 +217,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   .tab-btn { font-size: 11px; padding: 12px 4px; }
   .insight-row { grid-template-columns: 1fr; }
 }
+
+/* ── Member tags ── */
+.member-tag {
+  display: flex; align-items: center; gap: 6px;
+  background: #EEEDFE; color: #3C3489;
+  padding: 6px 10px; border-radius: 20px; font-size: 13px; font-weight: 500;
+}
+.member-tag-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #6C47FF; color: white; font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+}
+.member-tag-remove { cursor: pointer; opacity: 0.6; margin-left: 2px; font-size: 12px; }
+.member-tag-remove:hover { opacity: 1; }
