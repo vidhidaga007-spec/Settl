@@ -267,6 +267,9 @@ function showConfirmCard(parsed) {
   document.getElementById('edit-transcript').value = parsed.transcript || ''
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
+  const detectedCategory = detectCategory(parsed.description || '')
+  document.getElementById('edit-category').value =
+  detectedCategory || parsed.category || '🧾 General'
   document.getElementById('edit-paidby').value = parsed.paidBy || 'You'
   document.getElementById('edit-people').value = (parsed.people || []).join(', ')
   document.getElementById('edit-type').value = parsed.type || 'personal'
