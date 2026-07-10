@@ -286,7 +286,25 @@ function showConfirmCard(parsed) {
     const match = allGroups.find(g => g.name.toLowerCase().includes(parsed.groupName.toLowerCase()))
     if (match) groupSelect.value = match.id
   }
+// If AI didn't identify a group, try matching the description/transcript
+if (!parsed.groupName) {
+  const text = (
+    parsed.transcript +
+    " " +
+    parsed.description
+  ).toLowerCase()
 
+  const match = allGroups.find(g =>
+    text.includes(g.name.toLowerCase())
+  )
+
+  if (match) {
+    document.getElementById('edit-type').value = 'group'
+    groupSelect.value = match.id
+  }
+}
+
+toggleGroupField()
   toggleGroupField()
 
   // Split chips
