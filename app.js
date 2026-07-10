@@ -281,32 +281,55 @@ function showConfirmCard(parsed) {
     groupSelect.appendChild(opt)
   })
 
-  // Auto-select group if name matches
-  if (parsed.groupName) {
-    const match = allGroups.find(g => g.name.toLowerCase().includes(parsed.groupName.toLowerCase()))
-    if (match) groupSelect.value = match.id
-  }
-// If AI didn't identify a group, try matching the description/transcript
-if (!parsed.groupName) {
+ // --------------------
+// Smart group detection
+// --------------------
+
+let detectedGroup = null
+
+// First try the group returned by AI
+if (parsed.groupName) {
+  detectedGroup = allGroups.find(g =>
+    g.name.toLowerCase() === parsed.groupName.toLowerCase()
+  )
+}
+
+// Otherwise search the transcript + description
+if (!detectedGroup) {
+
   const text = (
-    parsed.transcript +
+    (parsed.transcript || "") +
     " " +
-    parsed.description
+    (parsed.description || "")
   ).toLowerCase()
 
-  const match = allGroups.find(g =>
+  detectedGroup = allGroups.find(g =>
     text.includes(g.name.toLowerCase())
   )
+}
 
-  if (match) {
-    document.getElementById('edit-type').value = 'group'
-    groupSelect.value = match.id
+if (detectedGroup) {
+
+  document.getElementById('edit-type').value = 'group'
+  groupSelect.value = detectedGroup.id
+
+  // ONLY auto-fill everyone if nobody was explicitly mentioned
+  if ((parsed.people || []).length === 0) {
+
+    parsed.people = detectedGroup.group_members
+      .map(m => m.name)
+      .filter(name =>
+        name.toLowerCase() !== (parsed.paidBy || '').toLowerCase()
+      )
+
+    document.getElementById('edit-people').value =
+      parsed.people.join(', ')
   }
+
 }
 
 toggleGroupField()
-  toggleGroupField()
-
+  
   // Split chips
   const people = parsed.people || []
   const total = people.length + 1
