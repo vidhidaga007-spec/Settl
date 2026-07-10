@@ -1,4 +1,3 @@
-
 // ═══════════════════════════════════════════════
 // PASTE YOUR SUPABASE KEYS HERE
 // ═══════════════════════════════════════════════
@@ -17,6 +16,8 @@ let allExpenses = []
 let allGroups = []
 let currentGroupId = null
 let currentFriendName = null
+let selfPersonId = null
+let editingGroupId = null
 
 // ══════════════════════════════════════════════
 // AUTH
@@ -44,7 +45,29 @@ async function showApp(user) {
   document.getElementById('landing-page').classList.add('hidden')
   document.getElementById('app-page').classList.remove('hidden')
   document.getElementById('user-greeting').textContent = 'Hi, ' + currentUserName + ' 👋'
+  selfPersonId = await ensureSelfPerson()
   await Promise.all([loadExpenses(), loadGroups()])
+}
+
+// ══════════════════════════════════════════════
+// PEOPLE — resolving names/emails to real "people" rows
+// ══════════════════════════════════════════════
+
+async function ensureSelfPerson() {
+  const { data, error } = await db.rpc('get_or_create_self')
+  if (error) { console.error('get_or_create_self error:', error); return null }
+  return data
+}
+
+async function resolvePerson(name, email = '') {
+  const trimmedName = (name || '').trim()
+  if (!trimmedName) return null
+  if (trimmedName === 'You' || trimmedName.toLowerCase() === currentUserName.toLowerCase()) {
+    return selfPersonId
+  }
+  const { data, error } = await db.rpc('upsert_person', { p_name: trimmedName, p_email: email || null })
+  if (error) { console.error('resolvePerson error:', error); return null }
+  return data
 }
 
 function showModal(type) {
@@ -223,6 +246,7 @@ async function parseExpenseFromText() {
 
 function showConfirmCard(parsed) {
   document.getElementById('confirm-original').textContent = '"' + (parsed.transcript || '') + '"'
+  document.getElementById('edit-transcript').value = parsed.transcript || ''
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
   document.getElementById('edit-paidby').value = parsed.paidBy || 'You'
@@ -275,50 +299,49 @@ async function confirmExpense() {
   const amount = parseFloat(document.getElementById('edit-amount').value)
   const description = document.getElementById('edit-description').value.trim()
   const category = document.getElementById('edit-category').value
-  const paidBy = document.getElementById('edit-paidby').value.trim()
+  const paidByName = document.getElementById('edit-paidby').value.trim() || 'You'
   const peopleRaw = document.getElementById('edit-people').value.trim()
-  const people = peopleRaw ? peopleRaw.split(',').map(p => p.trim()).filter(Boolean) : []
+  const peopleNames = peopleRaw ? peopleRaw.split(',').map(p => p.trim()).filter(Boolean) : []
   const type = document.getElementById('edit-type').value
   const groupId = document.getElementById('edit-group-id').value || null
-  const groupName = groupId ? (allGroups.find(g => g.id === groupId)?.name || '') : ''
-  const perPerson = people.length > 0 ? Math.round(amount / (people.length + 1)) : amount
+  const transcript = document.getElementById('edit-transcript').value || description
+  const perPerson = peopleNames.length > 0 ? Math.round(amount / (peopleNames.length + 1)) : amount
 
   if (!amount || !description) { alert('Please fill in at least the amount and description.'); return }
+
+  const paidByPersonId = await resolvePerson(paidByName)
+  if (!paidByPersonId) { alert('Could not resolve who paid. Please try again.'); return }
+
+  const splitPeople = []
+  for (const name of peopleNames) {
+    const pid = await resolvePerson(name)
+    if (pid) splitPeople.push({ name, id: pid })
+  }
 
   const { data, error } = await db.from('expenses').insert([{
     created_by: currentUser.id,
     amount,
     description,
     category,
-    paid_by: paidBy,
-    paid_by_user_id: currentUser.id,
-    people,
-    type,
+    paid_by_person_id: paidByPersonId,
     group_id: type === 'group' ? groupId : null,
-    group_name: type === 'group' ? groupName : '',
-    per_person: perPerson
+    transcript
   }]).select()
 
   if (error) { alert('Error saving expense: ' + error.message); return }
 
-  await saveContacts(people)
+  const expenseId = data[0].id
 
-  if (people.length > 0) {
-    await setupReminders(data[0].id, people, amount, perPerson)
+  if (splitPeople.length > 0) {
+    const splitRows = splitPeople.map(p => ({ expense_id: expenseId, person_id: p.id, amount_owed: perPerson }))
+    const { error: splitError } = await db.from('expense_splits').insert(splitRows)
+    if (splitError) console.error('Split insert error:', splitError)
+    await setupReminders(expenseId, splitPeople.map(p => p.name), amount, perPerson)
   }
 
   await loadExpenses()
   document.getElementById('confirm-card').classList.add('hidden')
   showSuccessToast(description, amount)
-}
-
-async function saveContacts(people) {
-  for (const name of people) {
-    await db.from('contacts').upsert([{
-      user_id: currentUser.id,
-      friend_name: name
-    }], { onConflict: 'user_id,friend_name', ignoreDuplicates: true })
-  }
 }
 
 async function setupReminders(expenseId, people, amount, perPerson) {
@@ -338,11 +361,29 @@ async function setupReminders(expenseId, people, amount, perPerson) {
 
 async function loadExpenses() {
   const { data, error } = await db.from('expenses')
-    .select('*')
-    .eq('created_by', currentUser.id)
+    .select(`
+      *,
+      payer:people!paid_by_person_id(id, name),
+      group:groups(id, name, emoji),
+      expense_splits(person_id, amount_owed, people(id, name))
+    `)
     .order('created_at', { ascending: false })
   if (error) { console.error('Load expenses error:', error); return }
-  allExpenses = data || []
+
+  // Reconstruct the flat shape the rest of the app expects
+  // (paid_by, people, per_person, type, group_name) from the joined data.
+  allExpenses = (data || []).map(e => {
+    const splits = e.expense_splits || []
+    return {
+      ...e,
+      paid_by: e.payer?.id === selfPersonId ? 'You' : (e.payer?.name || 'Unknown'),
+      paid_by_person_id_resolved: e.payer?.id || null,
+      people: splits.map(s => s.people?.name).filter(Boolean),
+      per_person: splits.length > 0 ? Number(splits[0].amount_owed) : Number(e.amount),
+      type: e.group_id ? 'group' : 'personal',
+      group_name: e.group?.name || ''
+    }
+  })
   renderFeed()
 }
 
@@ -382,11 +423,18 @@ function expenseCard(e) {
 
 async function loadGroups() {
   const { data, error } = await db.from('groups')
-    .select('*, group_members(*)')
-    .eq('created_by', currentUser.id)
+    .select('*, group_members(person_id, people(id, name, email, linked_user_id))')
     .order('created_at', { ascending: false })
   if (error) { console.error('Load groups error:', error); return }
-  allGroups = data || []
+  allGroups = (data || []).map(g => ({
+    ...g,
+    group_members: (g.group_members || []).map(gm => ({
+      id: gm.person_id,
+      name: gm.people?.name || 'Unknown',
+      email: gm.people?.email || '',
+      linked: !!gm.people?.linked_user_id
+    }))
+  }))
 }
 
 function renderGroups() {
@@ -412,7 +460,15 @@ function renderGroups() {
             <div class="group-name">${g.emoji} ${g.name}</div>
             <div class="group-meta">${members.length} members · ₹${totalSpent.toLocaleString('en-IN')} total</div>
           </div>
-          <div class="group-arrow">›</div>
+          <div style="display:flex;align-items:center;gap:2px">
+            ${g.created_by === currentUser.id ? `
+              <div class="group-card-actions">
+                <button class="icon-btn" onclick="event.stopPropagation(); showCreateGroup('${g.id}')" title="Edit group">✏️</button>
+                <button class="icon-btn" onclick="event.stopPropagation(); deleteGroup('${g.id}')" title="Delete group">🗑️</button>
+              </div>
+            ` : ''}
+            <div class="group-arrow">›</div>
+          </div>
         </div>
         <div class="member-chips">
           ${members.slice(0, 5).map(m => `<span class="member-chip" title="${m.name}">${m.name[0].toUpperCase()}</span>`).join('')}
@@ -425,21 +481,63 @@ function renderGroups() {
 
 // ── Create group ──────────────────────────────
 
-function showCreateGroup() {
+function showCreateGroup(groupId = null) {
+  editingGroupId = groupId
   document.getElementById('create-group-modal').classList.remove('hidden')
   document.getElementById('member-tags').innerHTML = ''
   document.getElementById('member-input').value = ''
-  document.getElementById('group-name').value = ''
-  document.getElementById('group-emoji').value = '👥'
+  const emailInput = document.getElementById('member-email-input')
+  if (emailInput) emailInput.value = ''
+
+  const modalTitle = document.querySelector('#create-group-modal h2')
+  const modalSub = document.querySelector('#create-group-modal .modal-sub')
+  const saveBtn = document.querySelector('#create-group-modal .btn-full')
+
+  if (groupId) {
+    const g = allGroups.find(x => x.id === groupId)
+    if (!g) return
+    modalTitle.textContent = 'Edit group'
+    modalSub.textContent = 'Update the name, emoji, or members'
+    saveBtn.textContent = 'Save changes'
+    document.getElementById('group-name').value = g.name
+    document.getElementById('group-emoji').value = g.emoji
+    ;(g.group_members || []).forEach(m => {
+      if (m.id === selfPersonId) return // don't show yourself as a removable tag
+      addMemberTagFromData(m.name, m.email)
+    })
+  } else {
+    modalTitle.textContent = 'Create a group'
+    modalSub.textContent = 'Give it a name and add your friends'
+    saveBtn.textContent = 'Create group'
+    document.getElementById('group-name').value = ''
+    document.getElementById('group-emoji').value = '👥'
+  }
 }
 
 function closeCreateGroup() {
   document.getElementById('create-group-modal').classList.add('hidden')
+  editingGroupId = null
+}
+
+function addMemberTagFromData(name, email = '') {
+  const tagsDiv = document.getElementById('member-tags')
+  const tag = document.createElement('div')
+  tag.className = 'member-tag'
+  tag.dataset.name = name
+  tag.dataset.email = email
+  tag.innerHTML = `
+    <span class="member-tag-avatar">${name[0].toUpperCase()}</span>
+    <span>${name}${email ? ' <span class="member-tag-email">✉️</span>' : ''}</span>
+    <span class="member-tag-remove" onclick="this.parentElement.remove()">✕</span>
+  `
+  tagsDiv.appendChild(tag)
 }
 
 function addMemberTag() {
   const input = document.getElementById('member-input')
+  const emailInput = document.getElementById('member-email-input')
   const name = input.value.trim()
+  const email = emailInput ? emailInput.value.trim() : ''
   if (!name) return
 
   // Don't add duplicates
@@ -447,21 +545,14 @@ function addMemberTag() {
   for (const tag of existing) {
     if (tag.dataset.name.toLowerCase() === name.toLowerCase()) {
       input.value = ''
+      if (emailInput) emailInput.value = ''
       return
     }
   }
 
-  const tagsDiv = document.getElementById('member-tags')
-  const tag = document.createElement('div')
-  tag.className = 'member-tag'
-  tag.dataset.name = name
-  tag.innerHTML = `
-    <span class="member-tag-avatar">${name[0].toUpperCase()}</span>
-    <span>${name}</span>
-    <span class="member-tag-remove" onclick="this.parentElement.remove()">✕</span>
-  `
-  tagsDiv.appendChild(tag)
+  addMemberTagFromData(name, email)
   input.value = ''
+  if (emailInput) emailInput.value = ''
   input.focus()
 }
 
@@ -472,57 +563,74 @@ async function createGroup() {
   if (!name) { showError('group-error', 'Please enter a group name.'); return }
 
   const btn = document.querySelector('#create-group-modal .btn-full')
-  btn.textContent = 'Creating...'; btn.disabled = true
+  const isEditing = !!editingGroupId
+  btn.disabled = true
+  btn.textContent = isEditing ? 'Saving...' : 'Creating...'
 
-  const { data: groupData, error: groupError } = await db.from('groups').insert([{
-    name, emoji, created_by: currentUser.id
-  }]).select()
+  let groupId = editingGroupId
 
-  if (groupError) {
-    showError('group-error', 'Error: ' + groupError.message)
-    btn.textContent = 'Create group'; btn.disabled = false
-    return
-  }
-
-  const groupId = groupData[0].id
-
-  // Always add creator as first member
-  const members = [{
-    group_id: groupId,
-    user_id: currentUser.id,
-    name: currentUserName,
-    email: currentUser.email
-  }]
-
-  // Add tagged members
-  const tagEls = document.querySelectorAll('.member-tag')
-  tagEls.forEach(tag => {
-    const memberName = tag.dataset.name
-    if (memberName) {
-      members.push({
-        group_id: groupId,
-        user_id: null,
-        name: memberName,
-        email: ''
-      })
+  if (isEditing) {
+    const { error } = await db.from('groups').update({ name, emoji }).eq('id', editingGroupId)
+    if (error) {
+      showError('group-error', 'Error: ' + error.message)
+      btn.disabled = false; btn.textContent = 'Save changes'
+      return
     }
-  })
-
-  const { error: memberError } = await db.from('group_members').insert(members)
-  if (memberError) {
-    console.error('Member insert error:', memberError)
-    showError('group-error', 'Group created but members failed to save: ' + memberError.message)
+  } else {
+    const { data: groupData, error: groupError } = await db.from('groups').insert([{
+      name, emoji, created_by: currentUser.id
+    }]).select()
+    if (groupError) {
+      showError('group-error', 'Error: ' + groupError.message)
+      btn.disabled = false; btn.textContent = 'Create group'
+      return
+    }
+    groupId = groupData[0].id
   }
 
-  // Save to contacts
-  const friendNames = members.filter(m => m.user_id !== currentUser.id).map(m => m.name)
-  if (friendNames.length > 0) await saveContacts(friendNames)
+  // Resolve every tagged member (and yourself) to a real person_id,
+  // linking to an existing account by email where possible.
+  const desiredPersonIds = new Set([selfPersonId])
+  const tagEls = document.querySelectorAll('.member-tag')
+  for (const tag of tagEls) {
+    const pid = await resolvePerson(tag.dataset.name, tag.dataset.email || '')
+    if (pid) desiredPersonIds.add(pid)
+  }
 
-  btn.textContent = 'Create group'; btn.disabled = false
+  if (isEditing) {
+    const { data: existing } = await db.from('group_members').select('person_id').eq('group_id', groupId)
+    const existingIds = new Set((existing || []).map(r => r.person_id))
+    const toAdd = [...desiredPersonIds].filter(id => !existingIds.has(id)).map(id => ({ group_id: groupId, person_id: id }))
+    const toRemove = [...existingIds].filter(id => !desiredPersonIds.has(id))
+    if (toAdd.length) await db.from('group_members').insert(toAdd)
+    if (toRemove.length) await db.from('group_members').delete().eq('group_id', groupId).in('person_id', toRemove)
+  } else {
+    const memberRows = [...desiredPersonIds].map(id => ({ group_id: groupId, person_id: id }))
+    const { error: memberError } = await db.from('group_members').insert(memberRows)
+    if (memberError) {
+      console.error('Member insert error:', memberError)
+      showError('group-error', 'Group created but members failed to save: ' + memberError.message)
+    }
+  }
+
+  btn.disabled = false; btn.textContent = isEditing ? 'Save changes' : 'Create group'
+  editingGroupId = null
   closeCreateGroup()
   await loadGroups()
   renderGroups()
-  showSuccessToast(name, 0, true)
+  showSuccessToast(isEditing ? name + ' updated' : name, 0, true)
+}
+
+async function deleteGroup(groupId) {
+  const g = allGroups.find(x => x.id === groupId)
+  if (!g) return false
+  const ok = confirm(`Delete "${g.emoji} ${g.name}"? Its expenses stay in your history but won't be grouped anymore.`)
+  if (!ok) return false
+  const { error } = await db.from('groups').delete().eq('id', groupId)
+  if (error) { alert('Error deleting group: ' + error.message); return false }
+  await Promise.all([loadGroups(), loadExpenses()])
+  renderGroups()
+  return true
 }
 
 // ── Group detail ──────────────────────────────
@@ -537,6 +645,14 @@ async function openGroupDetail(groupId) {
   if (header) header.style.display = 'none'
   document.getElementById('group-detail').classList.remove('hidden')
   document.getElementById('group-detail-name').textContent = group.emoji + ' ' + group.name
+
+  const actionsDiv = document.getElementById('group-detail-actions')
+  if (actionsDiv) {
+    actionsDiv.innerHTML = group.created_by === currentUser.id
+      ? `<button class="icon-btn" onclick="showCreateGroup('${group.id}')" title="Edit group">✏️</button>
+         <button class="icon-btn" onclick="deleteGroup('${group.id}').then(ok => { if (ok) closeGroupDetail() })" title="Delete group">🗑️</button>`
+      : ''
+  }
 
   const groupExpenses = allExpenses.filter(e => e.group_id === groupId)
   const expensesDiv = document.getElementById('group-expenses')
@@ -724,13 +840,14 @@ async function sendReminder() {
   const friendName = currentFriendName
   const amount = document.getElementById('remind-btn').dataset.amount
 
-  const { data: contacts } = await db.from('contacts')
-    .select('friend_email')
-    .eq('user_id', currentUser.id)
-    .eq('friend_name', friendName)
-    .single()
+  const { data: person } = await db.from('people')
+    .select('email')
+    .eq('owner_id', currentUser.id)
+    .ilike('name', friendName)
+    .limit(1)
+    .maybeSingle()
 
-  const email = contacts?.friend_email
+  const email = person?.email
 
   if (email) {
     const subject = encodeURIComponent('Friendly reminder — Spliq')
