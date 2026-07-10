@@ -137,6 +137,7 @@
           </div>
           <div class="confirm-field"><label>Who paid</label><input type="text" id="edit-paidby" /></div>
           <div class="confirm-field"><label>Split with (names, comma separated)</label><input type="text" id="edit-people" /></div>
+          <input type="hidden" id="edit-transcript" />
           <div class="confirm-field">
             <label>Log this as</label>
             <select id="edit-type" onchange="toggleGroupField()">
@@ -188,9 +189,11 @@
           <div class="form-group">
             <label>Add members</label>
             <div style="display:flex;gap:8px">
-              <input type="text" id="member-input" placeholder="Type a name and press Add" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') addMemberTag()" />
+              <input type="text" id="member-input" placeholder="Name" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') document.getElementById('member-email-input').focus()" />
+              <input type="email" id="member-email-input" placeholder="Email (optional)" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') addMemberTag()" />
               <button onclick="addMemberTag()" class="btn-primary" style="padding:10px 16px;white-space:nowrap;border-radius:8px">Add</button>
             </div>
+            <div class="member-hint">Add their email and they'll automatically see this group's expenses if they have — or ever create — a Settl account.</div>
             <div id="member-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:10px"></div>
           </div>
           <div id="group-error" class="error-msg hidden"></div>
@@ -203,7 +206,8 @@
         <div class="section-container">
           <div class="section-header">
             <button class="btn-ghost" onclick="closeGroupDetail()">← Back</button>
-            <h2 id="group-detail-name"></h2>
+            <h2 id="group-detail-name" style="flex:1"></h2>
+            <div class="group-card-actions" id="group-detail-actions"></div>
           </div>
           <div class="sub-tabs">
             <button class="sub-tab active" onclick="showSubTab('group-expenses', this)">Expenses</button>
