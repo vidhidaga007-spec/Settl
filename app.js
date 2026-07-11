@@ -13,6 +13,8 @@ let currentUser = null
 let currentUserName = ''
 let isRecording = false
 let allExpenses = []
+let selectedExpenses = new Set()
+let selectionMode = false
 let allGroups = []
 let currentGroupId = null
 let currentFriendName = null
@@ -553,8 +555,15 @@ function expenseCard(e) {
     ? `<span class="tag tag-group">👥 ${e.group_name || 'Group'}</span>`
     : `<span class="tag tag-personal">👤 Personal</span>`
 return `
-  <div class="expense-item">
+  <div class="expense-item ${selectionMode ? 'selecting' : ''}"
+     onclick="${selectionMode ? `toggleExpenseSelection('${e.id}')` : ''}">
     <div class="expense-item-top">
+    ${selectionMode ? `
+<input
+type="checkbox"
+${selectedExpenses.has(e.id) ? "checked" : ""}
+onclick="event.stopPropagation();toggleExpenseSelection('${e.id}')">
+` : ""}
       <div class="expense-item-desc">${e.description}</div>
 
       <div style="display:flex;align-items:center;gap:10px;">
@@ -611,6 +620,26 @@ async function deleteExpense(expenseId) {
     openGroupDetail(currentGroupId)
   }
 
+}
+
+function toggleExpenseSelection(id){
+
+    if(selectedExpenses.has(id))
+        selectedExpenses.delete(id)
+    else
+        selectedExpenses.add(id)
+
+    renderFeed()
+}
+
+function toggleSelectionMode(){
+
+    selectionMode=!selectionMode
+
+    if(!selectionMode)
+        selectedExpenses.clear()
+
+    renderFeed()
 }
 
 // ══════════════════════════════════════════════
