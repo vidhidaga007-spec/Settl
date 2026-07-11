@@ -189,12 +189,55 @@
           </div>
           <div class="form-group">
             <label>Add members</label>
-            <div style="display:flex;gap:8px">
-              <input type="text" id="member-input" placeholder="Name" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') document.getElementById('member-email-input').focus()" />
-              <input type="email" id="member-email-input" placeholder="Email (optional)" style="flex:1;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter') addMemberTag()" />
-              <button onclick="addMemberTag()" class="btn-primary" style="padding:10px 16px;white-space:nowrap;border-radius:8px">Add</button>
-            </div>
-            <div class="member-hint">Add their email and they'll automatically see this group's expenses if they have — or ever create — a Settl account.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+
+  <input
+    type="text"
+    id="member-input"
+    placeholder="Name *"
+    style="padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none"
+    onkeydown="if(event.key==='Enter') document.getElementById('member-email-input').focus()"
+  />
+
+  <details id="member-contact-details">
+
+    <summary
+      style="cursor:pointer;color:#16a34a;font-weight:600;font-size:13px;">
+      + Add contact (recommended)
+    </summary>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+
+      <input
+        type="email"
+        id="member-email-input"
+        placeholder="Email (optional)"
+        style="padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none"
+      />
+
+      <input
+        type="text"
+        id="member-phone-input"
+        placeholder="Phone (optional)"
+        style="padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;outline:none"
+      />
+
+      <div class="member-hint">
+        💡 Adding an email or phone lets Spliq automatically connect this person if they join later.
+      </div>
+
+    </div>
+
+  </details>
+
+  <button
+    onclick="addMemberTag()"
+    class="btn-primary"
+    style="padding:10px 16px;border-radius:8px">
+    Add Member
+  </button>
+
+</div>
             <div id="member-tags" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:10px"></div>
           </div>
           <div id="group-error" class="error-msg hidden"></div>
