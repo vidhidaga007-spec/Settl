@@ -430,31 +430,17 @@ const groupId = document.getElementById('edit-group-id').value || null
 // If this is a group expense and no names were entered,
 // automatically split with everyone else in the group.
 if (type === 'group' && groupId && peopleNames.length === 0) {
+
   const group = allGroups.find(g => g.id === groupId)
 
   if (group) {
     peopleNames = group.group_members
       .map(m => m.name)
-    .filter(name => {
-
-  const lower = name.toLowerCase()
-
-  const payerLower = (parsed.paidBy || "").toLowerCase()
-
-  const isCurrentUser =
-    lower === currentUserName.toLowerCase()
-
-  const payerIsCurrentUser =
-    ["you", "i", "me", "myself", currentUserName.toLowerCase()]
-      .includes(payerLower)
-
-  if (payerIsCurrentUser && isCurrentUser) {
-    return false
+      .filter(name =>
+        name.toLowerCase() !== paidByName.toLowerCase()
+      )
   }
 
-  return lower !== payerLower
-
-})
 }
   const transcript = document.getElementById('edit-transcript').value || description
   const perPerson = peopleNames.length > 0 ? Math.round(amount / (peopleNames.length + 1)) : amount
