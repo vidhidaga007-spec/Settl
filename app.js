@@ -905,19 +905,18 @@ function renderGroupBalances(group, groupExpenses) {
     const payer = expense.paid_by
 
     // Payer paid the whole bill
-    balances[payer] = (balances[payer] || 0) + Number(expense.amount)
+    // Others owe the payer their share
+;(expense.splits || []).forEach(split => {
 
-    // Everyone who owes money
-    ;(expense.splits || []).forEach(split => {
+  if (split.name === payer) return
 
-      if (split.name === payer) return
+  balances[split.name] =
+    (balances[split.name] || 0) - Number(split.amount_owed)
 
-      balances[split.name] = (balances[split.name] || 0) - Number(split.amount_owed)
+  balances[payer] =
+    (balances[payer] || 0) + Number(split.amount_owed)
 
-      // Payer gets that amount back
-      balances[payer] += Number(split.amount_owed)
-
-    })
+})
 
   })
 
