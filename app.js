@@ -469,7 +469,14 @@ async function loadExpenses() {
       paid_by: e.payer?.name || currentUserName,
       paid_by_person_id_resolved: e.payer?.id || null,
       people: splits.map(s => s.people?.name).filter(Boolean),
-      per_person: splits.length > 0 ? Number(splits[0].amount_owed) : Number(e.amount),
+
+splits: splits.map(s => ({
+    person_id: s.person_id,
+    name: s.people?.name,
+    amount_owed: Number(s.amount_owed)
+})),
+
+per_person: splits.length > 0 ? Number(splits[0].amount_owed) : Number(e.amount),
       type: e.group_id ? 'group' : 'personal',
       group_name: e.group?.name || ''
     }
