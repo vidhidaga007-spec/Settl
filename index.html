@@ -124,8 +124,64 @@
           <span>AI is parsing...</span>
         </div>
         <div id="confirm-card" class="confirm-card hidden">
+           <div id="confirm-card" class="confirm-card hidden">
           <div class="confirm-header">✨ AI understood this</div>
           <div class="confirm-original" id="confirm-original"></div>
+          <div class="confirm-field"><label>Amount (₹)</label><input type="number" id="edit-amount" /></div>
+          <div class="confirm-field"><label>Description</label><input type="text" id="edit-description" /></div>
+             <div id="edit-section" class="hidden">
+          <div class="confirm-field">
+            <label>Category</label>
+            <select id="edit-category">
+              <option>🍽️ Food</option><option>🚗 Travel</option><option>🏨 Accommodation</option>
+              <option>🎉 Entertainment</option><option>🛒 Groceries</option><option>💡 Utilities</option><option>🧾 General</option>
+            </select>
+          </div>
+          <div class="confirm-field"><label>Who paid</label><input type="text" id="edit-paidby" /></div>
+          <div class="confirm-field"><label>Split with (names, comma separated)</label><input type="text" id="edit-people" /></div>
+          <input type="hidden" id="edit-transcript" />
+          <div class="confirm-field">
+            <label>Log this as</label>
+            <select id="edit-type" onchange="toggleGroupField()">
+              <option value="personal">👤 Personal</option>
+              <option value="group">👥 Group expense</option>
+            </select>
+          </div>
+          <div class="confirm-field" id="group-select-field" style="display:none">
+            <label>Select group</label>
+            <select id="edit-group-id"><option value="">-- select a group --</option></select>
+          </div>
+         </div>
+               <div class="confirm-split" id="confirm-split"></div>
+          <div id="group-hint" class="group-hint hidden"></div>
+          <div class="confirm-buttons">
+            <button class="btn-confirm" onclick="confirmExpense()">✅ Confirm & save</button>
+            <button class="btn-cancel" onclick="cancelConfirm()">✕ Cancel</button>
+          </div>
+        </div>
+          <div class="review-summary">
+
+  <div class="summary-row">
+    <span>👤</span>
+    <span id="review-paidby"></span>
+  </div>
+
+  <div class="summary-row">
+    <span>👥</span>
+    <div id="review-people"></div>
+  </div>
+
+  <div class="summary-row">
+    <span>🏷</span>
+    <span id="review-category"></span>
+  </div>
+
+  <div class="summary-row">
+    <span>📂</span>
+    <span id="review-group"></span>
+  </div>
+
+</div>
           <div class="confirm-field"><label>Amount (₹)</label><input type="number" id="edit-amount" /></div>
           <div class="confirm-field"><label>Description</label><input type="text" id="edit-description" /></div>
           <div class="confirm-field">
