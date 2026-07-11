@@ -552,19 +552,65 @@ function expenseCard(e) {
   const typeTag = e.type === 'group'
     ? `<span class="tag tag-group">👥 ${e.group_name || 'Group'}</span>`
     : `<span class="tag tag-personal">👤 Personal</span>`
-  return `
-    <div class="expense-item">
-      <div class="expense-item-top">
-        <div class="expense-item-desc">${e.description}</div>
-        <div class="expense-item-amount">₹${Number(e.amount).toLocaleString('en-IN')}</div>
-      </div>
-      <div class="expense-item-sub">${e.paid_by} paid ${peopleText} · ${getTimeAgo(e.created_at)}</div>
-      <div class="expense-item-tags">
-        <span class="tag tag-cat">${e.category}</span>
-        ${typeTag}
+return `
+  <div class="expense-item">
+    <div class="expense-item-top">
+      <div class="expense-item-desc">${e.description}</div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+
+        <div class="expense-item-amount">
+          ₹${Number(e.amount).toLocaleString('en-IN')}
+        </div>
+
+        <button class="icon-btn"
+          onclick="deleteExpense('${e.id}')"
+          title="Delete expense">
+          🗑️
+        </button>
+
       </div>
     </div>
-  `
+
+    <div class="expense-item-sub">
+      ${e.paid_by} paid ${peopleText} · ${getTimeAgo(e.created_at)}
+    </div>
+
+    <div class="expense-item-tags">
+      <span class="tag tag-cat">${e.category}</span>
+      ${typeTag}
+    </div>
+  </div>
+`
+}
+
+async function deleteExpense(expenseId) {
+
+  if (!confirm("Delete this expense?")) return
+
+  // Delete splits first
+  await db
+    .from("expense_splits")
+    .delete()
+    .eq("expense_id", expenseId)
+
+  // Delete expense
+  const { error } = await db
+    .from("expenses")
+    .delete()
+    .eq("id", expenseId)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  await loadExpenses()
+
+  if (currentGroupId) {
+    openGroupDetail(currentGroupId)
+  }
+
 }
 
 // ══════════════════════════════════════════════
