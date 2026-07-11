@@ -110,8 +110,10 @@ async function ensureSelfPerson() {
   return data
 }
 
-async function resolvePerson(name, email = '') {
+async function resolvePerson(name, email = '', phone = '') {
+
   const trimmedName = (name || '').trim()
+
   if (!trimmedName) return null
 
   const lower = trimmedName.toLowerCase()
@@ -126,30 +128,85 @@ async function resolvePerson(name, email = '') {
     return selfPersonId
   }
 
-  // First check if this person already exists (case-insensitive)
-const { data: existingPeople } = await db
-  .from('people')
-  .select('id, name')
+  // 1. Email is the strongest identity
+  if (email) {
 
-const existing = existingPeople?.find(
-  p => p.name.trim().toLowerCase() === trimmedName.toLowerCase()
-)
+    const { data: byEmail } = await db
+      .from('people')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle()
 
-if (existing) {
-  return existing.id
-}
-  
-  const { data, error } = await db.rpc('upsert_person', {
-    p_name: trimmedName,
-    p_email: email || null
-  })
+    if (byEmail) return byEmail.id
+  }
+
+  // 2. Phone is next strongest
+  if (phone) {
+
+    const { data: byPhone } = await db
+      .from('people')
+      .select('*')
+      .eq('phone', phone)
+      .maybeSingle()
+
+    if (byPhone) return byPhone.id
+  }
+
+  // 3. Existing placeholder by name
+  const { data: existingPeople } = await db
+    .from('people')
+    .select('*')
+
+  const existing = existingPeople?.find(
+    p =>
+      p.name.trim().toLowerCase() ===
+      trimmedName.toLowerCase()
+  )
+
+  if (existing) {
+
+    // Improve the placeholder if we learned new info
+    const updates = {}
+
+    if (email && !existing.email)
+      updates.email = email
+
+    if (phone && !existing.phone)
+      updates.phone = phone
+
+    if (Object.keys(updates).length > 0) {
+
+      await db
+        .from('people')
+        .update(updates)
+        .eq('id', existing.id)
+
+    }
+
+    return existing.id
+
+  }
+
+  // 4. Nobody exists → create new person
+  const { data, error } = await db.rpc(
+    'upsert_person',
+    {
+      p_name: trimmedName,
+      p_email: email || null,
+      p_phone: phone || null
+    }
+  )
 
   if (error) {
-    console.error('resolvePerson error:', error)
+
+    console.error(error)
+
     return null
+
   }
 
   return data
+
 }
 
 function showModal(type) {
@@ -839,7 +896,11 @@ async function createGroup() {
   const desiredPersonIds = new Set([selfPersonId])
   const tagEls = document.querySelectorAll('.member-tag')
   for (const tag of tagEls) {
-    const pid = await resolvePerson(tag.dataset.name, tag.dataset.email || '')
+    const pid = await resolvePerson(
+  tag.dataset.name,
+  tag.dataset.email || '',
+  tag.dataset.phone || ''
+)
     if (pid) desiredPersonIds.add(pid)
   }
 
