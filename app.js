@@ -19,6 +19,55 @@ let currentFriendName = null
 let selfPersonId = null
 let editingGroupId = null
 
+const CATEGORY_KEYWORDS = {
+  "🍽️ Food": [
+    "food","dinner","lunch","breakfast","pizza","burger","sandwich",
+    "coffee","tea","restaurant","cafe","cake","ice cream",
+    "biryani","pasta","fries","momos","snacks",
+    "swiggy","zomato","dominos","pizza hut","kfc","mcdonalds"
+  ],
+
+  "🛒 Groceries": [
+    "grocery","groceries","milk","vegetables","vegetable",
+    "fruit","fruits","rice","atta","dal","bread",
+    "eggs","blinkit","zepto","instamart","bigbasket","dmart"
+  ],
+
+  "🚗 Travel": [
+    "uber","ola","cab","taxi","metro","train","flight",
+    "bus","petrol","fuel","diesel","rapido","parking","toll"
+  ],
+
+  "🏨 Accommodation": [
+    "hotel","hostel","airbnb","room","stay","resort","lodge"
+  ],
+
+  "🎉 Entertainment": [
+    "movie","cinema","concert","party","games",
+    "gaming","club","pub","tickets","netflix"
+  ],
+
+  "💡 Utilities": [
+    "electricity","water","wifi","internet",
+    "broadband","rent","maintenance","gas","recharge"
+  ]
+}
+
+function detectCategory(text) {
+
+  text = (text || "").toLowerCase()
+
+  for (const [category, words] of Object.entries(CATEGORY_KEYWORDS)) {
+
+    if (words.some(word => text.includes(word))) {
+      return category
+    }
+
+  }
+
+  return null
+}
+
 // ══════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════
