@@ -764,25 +764,39 @@ async function openGroupDetail(groupId) {
 }
 
 function renderGroupBalances(group, groupExpenses) {
-  const members = group.group_members || []
-  const balances = {}
-  members.forEach(m => { balances[m.name] = 0 })
 
-  groupExpenses.forEach(e => {
-    const people = e.people || []
-    const total = people.length + 1
-    const perPerson = Math.round(Number(e.amount) / total)
-    const payer = e.paid_by
-    if (balances[payer] !== undefined) balances[payer] += Number(e.amount) - perPerson
-    else balances[payer] = Number(e.amount) - perPerson
-    people.forEach(p => {
-      if (balances[p] !== undefined) balances[p] -= perPerson
-      else balances[p] = -perPerson
+  const balances = {}
+
+  // Initialize everyone
+  ;(group.group_members || []).forEach(member => {
+    balances[member.name] = 0
+  })
+
+  groupExpenses.forEach(expense => {
+
+    const payer = expense.paid_by
+
+    // Payer paid the whole bill
+    balances[payer] = (balances[payer] || 0) + Number(expense.amount)
+
+    // Everyone who owes money
+    ;(expense.splits || []).forEach(split => {
+
+      if (split.name === payer) return
+
+      balances[split.name] = (balances[split.name] || 0) - Number(split.amount_owed)
+
+      // Payer gets that amount back
+      balances[payer] += Number(split.amount_owed)
+
     })
+
   })
 
   const balDiv = document.getElementById('group-balances')
+
   const entries = Object.entries(balances)
+
   if (entries.length === 0) {
     balDiv.innerHTML = '<div class="feed-empty">No balances yet.</div>'
     return
@@ -795,7 +809,11 @@ function renderGroupBalances(group, groupExpenses) {
         <div class="bal-name">${name}</div>
       </div>
       <div class="bal-amount ${bal >= 0 ? 'owed' : 'owe'}">
-        ${bal >= 0 ? `Gets back ₹${Math.abs(Math.round(bal)).toLocaleString('en-IN')}` : `Owes ₹${Math.abs(Math.round(bal)).toLocaleString('en-IN')}`}
+        ${
+          bal >= 0
+            ? `Gets back ₹${Math.round(bal).toLocaleString('en-IN')}`
+            : `Owes ₹${Math.abs(Math.round(bal)).toLocaleString('en-IN')}`
+        }
       </div>
     </div>
   `).join('')
