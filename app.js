@@ -981,6 +981,12 @@ function renderFriends() {
   allExpenses.forEach(e => {
     const people = e.people || []
     people.forEach(name => {
+      if (
+  name.toLowerCase() === currentUserName.toLowerCase() ||
+  ["you", "i", "me", "myself"].includes(name.toLowerCase())
+) {
+  return
+}
       if (!friendMap[name]) friendMap[name] = { name, expenses: [], totalOwed: 0 }
       friendMap[name].expenses.push(e)
       const perPerson = Number(e.per_person) || Math.round(Number(e.amount) / (people.length + 1))
