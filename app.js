@@ -473,6 +473,13 @@ function toggleGroupField() {
 function cancelConfirm() {
   document.getElementById('confirm-card').classList.add('hidden')
 }
+function toggleEditSection() {
+
+  document
+    .getElementById("edit-section")
+    .classList.toggle("hidden")
+
+}
 
 // ══════════════════════════════════════════════
 // SAVE EXPENSE TO SUPABASE
