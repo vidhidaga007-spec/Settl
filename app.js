@@ -126,6 +126,19 @@ async function resolvePerson(name, email = '') {
     return selfPersonId
   }
 
+  // First check if this person already exists (case-insensitive)
+const { data: existingPeople } = await db
+  .from('people')
+  .select('id, name')
+
+const existing = existingPeople?.find(
+  p => p.name.trim().toLowerCase() === trimmedName.toLowerCase()
+)
+
+if (existing) {
+  return existing.id
+}
+  
   const { data, error } = await db.rpc('upsert_person', {
     p_name: trimmedName,
     p_email: email || null
