@@ -757,15 +757,20 @@ function closeCreateGroup() {
   editingGroupId = null
 }
 
-function addMemberTagFromData(name, email = '') {
+function addMemberTagFromData(name, email = '', phone = '') {
   const tagsDiv = document.getElementById('member-tags')
   const tag = document.createElement('div')
   tag.className = 'member-tag'
-  tag.dataset.name = name
-  tag.dataset.email = email
+ tag.dataset.name = name
+tag.dataset.email = email
+tag.dataset.phone = phone
   tag.innerHTML = `
     <span class="member-tag-avatar">${name[0].toUpperCase()}</span>
-    <span>${name}${email ? ' <span class="member-tag-email">✉️</span>' : ''}</span>
+   <span>
+  ${name}
+  ${email ? ' <span class="member-tag-email">✉️</span>' : ''}
+  ${phone ? ' <span class="member-tag-email">📱</span>' : ''}
+</span>
     <span class="member-tag-remove" onclick="this.parentElement.remove()">✕</span>
   `
   tagsDiv.appendChild(tag)
@@ -774,8 +779,10 @@ function addMemberTagFromData(name, email = '') {
 function addMemberTag() {
   const input = document.getElementById('member-input')
   const emailInput = document.getElementById('member-email-input')
+  const phoneInput = document.getElementById('member-phone-input')
   const name = input.value.trim()
   const email = emailInput ? emailInput.value.trim() : ''
+  const phone = phoneInput ? phoneInput.value.trim() : ''
   if (!name) return
 
   // Don't add duplicates
@@ -788,9 +795,10 @@ function addMemberTag() {
     }
   }
 
-  addMemberTagFromData(name, email)
+ addMemberTagFromData(name, email, phone)
   input.value = ''
   if (emailInput) emailInput.value = ''
+  if (phoneInput) phoneInput.value = ''
   input.focus()
 }
 
