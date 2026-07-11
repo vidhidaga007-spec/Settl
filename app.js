@@ -435,8 +435,26 @@ if (type === 'group' && groupId && peopleNames.length === 0) {
   if (group) {
     peopleNames = group.group_members
       .map(m => m.name)
-      .filter(name => name.toLowerCase() !== currentUserName.toLowerCase())
+    .filter(name => {
+
+  const lower = name.toLowerCase()
+
+  const payerLower = (parsed.paidBy || "").toLowerCase()
+
+  const isCurrentUser =
+    lower === currentUserName.toLowerCase()
+
+  const payerIsCurrentUser =
+    ["you", "i", "me", "myself", currentUserName.toLowerCase()]
+      .includes(payerLower)
+
+  if (payerIsCurrentUser && isCurrentUser) {
+    return false
   }
+
+  return lower !== payerLower
+
+})
 }
   const transcript = document.getElementById('edit-transcript').value || description
   const perPerson = peopleNames.length > 0 ? Math.round(amount / (peopleNames.length + 1)) : amount
