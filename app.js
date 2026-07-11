@@ -394,7 +394,35 @@ function showConfirmCard(parsed) {
   document.getElementById('edit-paidby').value = parsed.paidBy || 'You'
   document.getElementById('edit-people').value = (parsed.people || []).join(', ')
   document.getElementById('edit-type').value = parsed.type || 'personal'
+// ======================
+// Review Card
+// ======================
 
+document.getElementById('review-amount').textContent =
+  "₹" + Number(parsed.amount || 0).toLocaleString('en-IN')
+
+document.getElementById('review-description').textContent =
+  parsed.description || "Expense"
+
+document.getElementById('review-paidby').textContent =
+  (parsed.paidBy || "You") + " paid"
+
+document.getElementById('review-category').textContent =
+  detectedCategory || parsed.category || "🧾 General"
+
+document.getElementById('review-people').innerHTML =
+  (parsed.people || []).map(p =>
+    `<span class="split-chip">${p}</span>`
+  ).join(" ")
+
+document.getElementById('review-group').textContent =
+  parsed.type === "group"
+    ? (parsed.groupName || "Group")
+    : "Personal"
+
+document.getElementById("edit-section")
+  .classList.add("hidden")
+  
   // Populate group dropdown
   const groupSelect = document.getElementById('edit-group-id')
   groupSelect.innerHTML = '<option value="">-- select a group --</option>'
@@ -436,7 +464,9 @@ if (detectedGroup) {
 
   document.getElementById('edit-type').value = 'group'
   groupSelect.value = detectedGroup.id
-
+document.getElementById("review-group").textContent =
+  detectedGroup.emoji + " " + detectedGroup.name
+  
   // ONLY auto-fill everyone if nobody was explicitly mentioned
   if ((parsed.people || []).length === 0) {
 
