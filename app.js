@@ -518,7 +518,6 @@ console.log("OPEN", expenseId)
 
   document.getElementById('confirm-card')
     .classList.remove('hidden')
-
 }
 
 // ══════════════════════════════════════════════
