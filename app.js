@@ -577,19 +577,52 @@ peopleNames = peopleNames.filter(
     if (pid) splitPeople.push({ name, id: pid })
   }
 
-  const { data, error } = await db.from('expenses').insert([{
-    created_by: currentUser.id,
-    amount,
-    description,
-    category,
-    paid_by_person_id: paidByPersonId,
-    group_id: type === 'group' ? groupId : null,
-    transcript
-  }]).select()
+ let expenseId
 
-  if (error) { alert('Error saving expense: ' + error.message); return }
+if (editingExpenseId) {
 
-  const expenseId = data[0].id
+  const { error } = await db
+    .from('expenses')
+    .update({
+      amount,
+      description,
+      category,
+      paid_by_person_id: paidByPersonId,
+      group_id: type === 'group' ? groupId : null,
+      transcript
+    })
+    .eq('id', editingExpenseId)
+
+  if (error) {
+    alert('Error updating expense: ' + error.message)
+    return
+  }
+
+  expenseId = editingExpenseId
+
+} else {
+
+  const { data, error } = await db
+    .from('expenses')
+    .insert([{
+      created_by: currentUser.id,
+      amount,
+      description,
+      category,
+      paid_by_person_id: paidByPersonId,
+      group_id: type === 'group' ? groupId : null,
+      transcript
+    }])
+    .select()
+
+  if (error) {
+    alert('Error saving expense: ' + error.message)
+    return
+  }
+
+  expenseId = data[0].id
+
+}
 
   if (splitPeople.length > 0) {
     const splitRows = splitPeople.map(p => ({ expense_id: expenseId, person_id: p.id, amount_owed: perPerson }))
