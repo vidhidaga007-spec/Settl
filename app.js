@@ -673,8 +673,9 @@ function expenseCard(e) {
     : `<span class="tag tag-personal">👤 Personal</span>`
 return `
   <div class="expense-item ${selectionMode ? 'selecting' : ''}"
-       ${!selectionMode ? `onclick="openExpense('${e.id}')"` : ""}
-     onclick="${selectionMode ? `toggleExpenseSelection('${e.id}')` : ''}">
+       onclick="${selectionMode
+         ? `toggleExpenseSelection('${e.id}')`
+         : `openExpense('${e.id}')`}">
     <div class="expense-item-top">
     ${selectionMode ? `
 <input
