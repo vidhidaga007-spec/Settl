@@ -16,6 +16,7 @@ let allExpenses = []
 let selectedExpenses = new Set()
 let selectionMode = false
 let allGroups = []
+let editingExpenseId = null
 let currentGroupId = null
 let currentFriendName = null
 let selfPersonId = null
@@ -475,6 +476,51 @@ function cancelConfirm() {
   document.getElementById('confirm-card').classList.add('hidden')
 }
 
+function openExpense(expenseId) {
+
+  const expense = allExpenses.find(e => e.id === expenseId)
+
+  if (!expense) return
+
+  editingExpenseId = expenseId
+
+  document.getElementById('confirm-original').textContent =
+    '"' + (expense.transcript || '') + '"'
+
+  document.getElementById('edit-transcript').value =
+    expense.transcript || ''
+
+  document.getElementById('edit-amount').value =
+    expense.amount
+
+  document.getElementById('edit-description').value =
+    expense.description
+
+  document.getElementById('edit-category').value =
+    expense.category
+
+  document.getElementById('edit-paidby').value =
+    expense.paid_by
+
+  document.getElementById('edit-people').value =
+    (expense.people || []).join(', ')
+
+  document.getElementById('edit-type').value =
+    expense.type
+
+  document.getElementById('edit-group-id').value =
+    expense.group_id || ''
+
+  toggleGroupField()
+
+  document.querySelector('.btn-confirm').textContent =
+    '💾 Save Changes'
+
+  document.getElementById('confirm-card')
+    .classList.remove('hidden')
+
+}
+
 // ══════════════════════════════════════════════
 // SAVE EXPENSE TO SUPABASE
 // ══════════════════════════════════════════════
@@ -627,6 +673,7 @@ function expenseCard(e) {
     : `<span class="tag tag-personal">👤 Personal</span>`
 return `
   <div class="expense-item ${selectionMode ? 'selecting' : ''}"
+       ${!selectionMode ? `onclick="openExpense('${e.id}')"` : ""}
      onclick="${selectionMode ? `toggleExpenseSelection('${e.id}')` : ''}">
     <div class="expense-item-top">
     ${selectionMode ? `
