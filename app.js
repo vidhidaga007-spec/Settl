@@ -477,7 +477,7 @@ function cancelConfirm() {
 }
 
 function openExpense(expenseId) {
-
+console.log("OPEN", expenseId)
   const expense = allExpenses.find(e => e.id === expenseId)
 
   if (!expense) return
