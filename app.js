@@ -477,12 +477,36 @@ function cancelConfirm() {
 }
 
 function openExpense(expenseId) {
-console.log("OPEN", expenseId)
-  const expense = allExpenses.find(e => e.id === expenseId)
 
+  const expense = allExpenses.find(e => e.id === expenseId)
   if (!expense) return
 
   editingExpenseId = expenseId
+
+  // Open Log tab
+  showTab('log', document.querySelector('.tab-btn'))
+
+  document.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.classList.remove('active')
+  )
+
+  document.querySelector('.tab-btn').classList.add('active')
+
+  // Reuse existing confirmation card logic
+  showConfirmCard({
+    transcript: expense.transcript,
+    amount: expense.amount,
+    description: expense.description,
+    category: expense.category,
+    paidBy: expense.paid_by,
+    people: expense.people || [],
+    type: expense.type,
+    groupName: expense.group_name
+  })
+
+  document.querySelector('.btn-confirm').textContent =
+    '💾 Save Changes'
+}
 
   // Switch to Log tab
 showTab('log', document.querySelector('.tab-btn'))
@@ -493,41 +517,6 @@ document.querySelectorAll('.tab-btn').forEach(btn =>
 
 document.querySelector('.tab-btn').classList.add('active')
   
-  document.getElementById('confirm-original').textContent =
-    '"' + (expense.transcript || '') + '"'
-
-  document.getElementById('edit-transcript').value =
-    expense.transcript || ''
-
-  document.getElementById('edit-amount').value =
-    expense.amount
-
-  document.getElementById('edit-description').value =
-    expense.description
-
-  document.getElementById('edit-category').value =
-    expense.category
-
-  document.getElementById('edit-paidby').value =
-    expense.paid_by
-
-  document.getElementById('edit-people').value =
-    (expense.people || []).join(', ')
-
-  document.getElementById('edit-type').value =
-    expense.type
-
-  document.getElementById('edit-group-id').value =
-    expense.group_id || ''
-
-  toggleGroupField()
-
-  document.querySelector('.btn-confirm').textContent =
-    '💾 Save Changes'
-
-  document.getElementById('confirm-card')
-    .classList.remove('hidden')
-}
 
 // ══════════════════════════════════════════════
 // SAVE EXPENSE TO SUPABASE
