@@ -482,6 +482,7 @@ function openExpense(expenseId) {
   if (!expense) return
 
   editingExpenseId = expenseId
+  
 
   // Open Log tab
   showTab('log', document.querySelector('.tab-btn'))
@@ -599,29 +600,19 @@ if (editingExpenseId) {
     return
   }
 
+  // Delete old splits
+  await db
+    .from('expense_splits')
+    .delete()
+    .eq('expense_id', editingExpenseId)
+
+  // Delete old reminders
+  await db
+    .from('reminders')
+    .delete()
+    .eq('expense_id', editingExpenseId)
+
   expenseId = editingExpenseId
-
-} else {
-
-  const { data, error } = await db
-    .from('expenses')
-    .insert([{
-      created_by: currentUser.id,
-      amount,
-      description,
-      category,
-      paid_by_person_id: paidByPersonId,
-      group_id: type === 'group' ? groupId : null,
-      transcript
-    }])
-    .select()
-
-  if (error) {
-    alert('Error saving expense: ' + error.message)
-    return
-  }
-
-  expenseId = data[0].id
 
 }
 
@@ -633,8 +624,19 @@ if (editingExpenseId) {
   }
 
   await loadExpenses()
-  document.getElementById('confirm-card').classList.add('hidden')
-  showSuccessToast(description, amount)
+await loadGroups()
+
+renderGroups()
+
+editingExpenseId = null
+
+document.querySelector('.btn-confirm').textContent =
+  '✅ Confirm & Save'
+
+document.getElementById('confirm-card').classList.add('hidden')
+
+showSuccessToast(description, amount)
+  
 }
 
 async function setupReminders(expenseId, people, amount, perPerson) {
