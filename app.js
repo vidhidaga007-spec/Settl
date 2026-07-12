@@ -1432,3 +1432,4 @@ function blobToBase64(blob) {
     reader.readAsDataURL(blob)
   })
 }
+window.openExpense = openExpense
