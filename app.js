@@ -484,6 +484,15 @@ console.log("OPEN", expenseId)
 
   editingExpenseId = expenseId
 
+  // Switch to Log tab
+showTab('log', document.querySelector('.tab-btn'))
+
+document.querySelectorAll('.tab-btn').forEach(btn =>
+  btn.classList.remove('active')
+)
+
+document.querySelector('.tab-btn').classList.add('active')
+  
   document.getElementById('confirm-original').textContent =
     '"' + (expense.transcript || '') + '"'
 
