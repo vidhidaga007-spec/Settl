@@ -1186,24 +1186,7 @@ function openFriendDetail(friendName) {
   if (friendExpenses.length === 0) {
     expDiv.innerHTML = '<div class="feed-empty">No transactions yet.</div>'
   } else {
-    expDiv.innerHTML = friendExpenses.map(e => {
-      const typeTag = e.type === 'group'
-        ? `<span class="tag tag-group">👥 ${e.group_name || 'Group'}</span>`
-        : `<span class="tag tag-personal">👤 Personal</span>`
-      return `
-        <div class="expense-item">
-          <div class="expense-item-top">
-            <div class="expense-item-desc">${e.description}</div>
-            <div class="expense-item-amount">₹${Number(e.amount).toLocaleString('en-IN')}</div>
-          </div>
-          <div class="expense-item-sub">${e.paid_by} paid · ₹${Number(e.per_person).toLocaleString('en-IN')} each · ${getTimeAgo(e.created_at)}</div>
-          <div class="expense-item-tags">
-            <span class="tag tag-cat">${e.category}</span>
-            ${typeTag}
-          </div>
-        </div>
-      `
-    }).join('')
+   expDiv.innerHTML = friendExpenses.map(expenseCard).join('')
   }
 }
 
