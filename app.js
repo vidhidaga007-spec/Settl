@@ -615,7 +615,28 @@ if (editingExpenseId) {
   expenseId = editingExpenseId
 
 }
+else {
 
+  const { data, error } = await db
+    .from("expenses")
+    .insert([{
+      amount,
+      description,
+      category,
+      paid_by_person_id: paidByPersonId,
+      group_id: type === "group" ? groupId : null,
+      transcript
+    }])
+    .select()
+
+  if (error) {
+    alert("Error saving expense: " + error.message)
+    return
+  }
+
+  expenseId = data[0].id
+
+}
   if (splitPeople.length > 0) {
     const splitRows = splitPeople.map(p => ({ expense_id: expenseId, person_id: p.id, amount_owed: perPerson }))
     const { error: splitError } = await db.from('expense_splits').insert(splitRows)
