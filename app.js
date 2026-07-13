@@ -620,13 +620,14 @@ else {
   const { data, error } = await db
     .from("expenses")
     .insert([{
-      amount,
-      description,
-      category,
-      paid_by_person_id: paidByPersonId,
-      group_id: type === "group" ? groupId : null,
-      transcript
-    }])
+  amount,
+  description,
+  category,
+  created_by: currentUser.id,
+  paid_by_person_id: paidByPersonId,
+  group_id: type === "group" ? groupId : null,
+  transcript
+}])
     .select()
 
   if (error) {
