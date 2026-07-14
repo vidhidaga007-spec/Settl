@@ -702,7 +702,12 @@ else {
 }))
     const { error: splitError } = await db.from('expense_splits').insert(splitRows)
     if (splitError) console.error('Split insert error:', splitError)
-    await setupReminders(expenseId, splitPeople.map(p => p.name), amount, perPerson)
+    await setupReminders(
+  expenseId,
+  splitPeople.map(p => p.name),
+  amount,
+  splitPeople
+)
   }
 
   await loadExpenses()
@@ -721,12 +726,21 @@ showSuccessToast(description, amount)
  window.isSavingExpense = false 
 }
 
-async function setupReminders(expenseId, people, amount, perPerson) {
-  const reminders = people.map(name => ({
+async function setupReminders(expenseId, people, totalAmount, splitPeople) {
+
+  const reminders = splitPeople.map(p => ({
     from_user_id: currentUser.id,
-    to_name: name,
-    amount: perPerson,
+    to_name: p.name,
+    amount: p.amountOwed,
     expense_id: expenseId,
+    remind_after: new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    ).toISOString()
+  }))
+
+  await db.from("reminders").insert(reminders)
+
+}
     remind_after: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   }))
   await db.from('reminders').insert(reminders)
