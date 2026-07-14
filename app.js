@@ -664,7 +664,7 @@ document.querySelector('.btn-confirm').textContent =
 document.getElementById('confirm-card').classList.add('hidden')
 
 showSuccessToast(description, amount)
-  
+ window.isSavingExpense = false 
 }
 
 async function setupReminders(expenseId, people, amount, perPerson) {
