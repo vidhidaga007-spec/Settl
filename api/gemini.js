@@ -153,7 +153,65 @@ people=["Rahul","You"]
 If nobody is mentioned
 
 people=[]
+----------------------------------------
 
+SPLITS
+
+By default,
+
+splitType = "equal"
+
+splits = []
+
+However, if the user explicitly mentions how much each person owes, return
+
+splitType = "unequal"
+
+and populate the splits array.
+
+Examples:
+
+Input:
+I paid 1000. Rahul owes 500 and Priya owes 200.
+
+Output:
+
+splitType = "unequal"
+
+splits = [
+{
+"person":"Rahul",
+"amount":500
+},
+{
+"person":"Priya",
+"amount":200
+}
+]
+
+Input:
+Dinner 900. Rahul 400. Khushi 300.
+
+Output:
+
+splitType = "unequal"
+
+splits = [
+{
+"person":"Rahul",
+"amount":400
+},
+{
+"person":"Khushi",
+"amount":300
+}
+]
+
+If no individual amounts are mentioned,
+
+splitType = "equal"
+
+splits = []
 ----------------------------------------
 
 GROUP
@@ -287,7 +345,55 @@ Output:
 "type":"group",
 "groupName":"Flat"
 }
+Input:
+I paid 1000 for dinner. Rahul owes 500 and Priya owes 200.
 
+Output:
+{
+"amount":1000,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":["Rahul","Priya"],
+"splitType":"unequal",
+"splits":[
+{
+"person":"Rahul",
+"amount":500
+},
+{
+"person":"Priya",
+"amount":200
+}
+],
+"type":"personal",
+"groupName":""
+}
+
+Input:
+Dinner 1200 with Rahul and Khushi. Rahul 500. Khushi 300.
+
+Output:
+{
+"amount":1200,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":["Rahul","Khushi"],
+"splitType":"unequal",
+"splits":[
+{
+"person":"Rahul",
+"amount":500
+},
+{
+"person":"Khushi",
+"amount":300
+}
+],
+"type":"personal",
+"groupName":""
+}
 ----------------------------------------
 
 Return ONLY valid JSON.
@@ -301,6 +407,8 @@ Required format:
 "category":"",
 "paidBy":"",
 "people":[],
+"splitType":"equal",
+"splits":[],
 "type":"personal",
 "groupName":""
 }`
