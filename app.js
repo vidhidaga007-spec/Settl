@@ -457,13 +457,35 @@ if (detectedGroup) {
 toggleGroupField()
   
   // Split chips
-  const people = parsed.people || []
+ const people = parsed.people || []
+
+let splitHTML = `<span class="split-chip payer">
+${parsed.paidBy || 'You'} paid ₹${(parsed.amount || 0).toLocaleString('en-IN')}
+</span>`
+
+if (parsed.splitType === "unequal" && parsed.splits) {
+
+  splitHTML += parsed.splits.map(s => `
+    <span class="split-chip">
+      ${s.person} owes ₹${Number(s.amount).toLocaleString('en-IN')}
+    </span>
+  `).join('')
+
+} else {
+
   const total = people.length + 1
-  const perPerson = total > 0 ? Math.round((parsed.amount || 0) / total) : 0
-  document.getElementById('confirm-split').innerHTML = `
-    <span class="split-chip payer">${parsed.paidBy || 'You'} paid ₹${(parsed.amount || 0).toLocaleString('en-IN')}</span>
-    ${people.map(p => `<span class="split-chip">${p} owes ₹${perPerson.toLocaleString('en-IN')}</span>`).join('')}
-  `
+  const perPerson = total > 0
+    ? Math.round((parsed.amount || 0) / total)
+    : 0
+
+  splitHTML += people.map(p => `
+    <span class="split-chip">
+      ${p} owes ₹${perPerson.toLocaleString('en-IN')}
+    </span>
+  `).join('')
+}
+
+document.getElementById("confirm-split").innerHTML = splitHTML
   document.getElementById('confirm-card').classList.remove('hidden')
 }
 
