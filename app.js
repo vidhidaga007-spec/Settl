@@ -602,11 +602,38 @@ peopleNames = peopleNames.filter(
 )
   if (!paidByPersonId) { alert('Could not resolve who paid. Please try again.'); return }
 
-  const splitPeople = []
-  for (const name of peopleNames) {
-    const pid = await resolvePerson(name)
-    if (pid) splitPeople.push({ name, id: pid })
+const splitPeople = []
+
+for (const name of peopleNames) {
+
+  const pid = await resolvePerson(name)
+
+  if (!pid) continue
+
+  let amountOwed = perPerson
+
+  if (
+    window.currentParsedExpense &&
+    window.currentParsedExpense.splitType === "unequal"
+  ) {
+
+    const split = window.currentParsedExpense.splits.find(
+      s => s.person.toLowerCase() === name.toLowerCase()
+    )
+
+    if (split) {
+      amountOwed = Number(split.amount)
+    }
+
   }
+
+  splitPeople.push({
+    name,
+    id: pid,
+    amountOwed
+  })
+
+}
 
  let expenseId
 
