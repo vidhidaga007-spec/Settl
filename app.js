@@ -740,12 +740,6 @@ async function setupReminders(expenseId, people, totalAmount, splitPeople) {
 
   await db.from("reminders").insert(reminders)
 
-}
-    remind_after: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-  }))
-  await db.from('reminders').insert(reminders)
-}
-
 // ══════════════════════════════════════════════
 // LOAD EXPENSES
 // ══════════════════════════════════════════════
