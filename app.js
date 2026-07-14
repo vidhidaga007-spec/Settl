@@ -387,6 +387,7 @@ async function parseExpenseFromText() {
 function showConfirmCard(parsed) {
   document.getElementById('confirm-original').textContent = '"' + (parsed.transcript || '') + '"'
   document.getElementById('edit-transcript').value = parsed.transcript || ''
+  window.currentParsedExpense = parsed
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
   const detectedCategory = detectCategory(parsed.description || '')
