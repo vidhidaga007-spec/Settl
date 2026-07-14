@@ -524,6 +524,7 @@ document.querySelector('.tab-btn').classList.add('active')
 // ══════════════════════════════════════════════
 
 async function confirmExpense() {
+  console.count("confirmExpense called")
   console.log("editingExpenseId =", editingExpenseId)
   const amount = parseFloat(document.getElementById('edit-amount').value)
 const description = document.getElementById('edit-description').value.trim()
