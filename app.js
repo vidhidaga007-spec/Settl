@@ -695,7 +695,11 @@ else {
 
 }
   if (splitPeople.length > 0) {
-    const splitRows = splitPeople.map(p => ({ expense_id: expenseId, person_id: p.id, amount_owed: perPerson }))
+  const splitRows = splitPeople.map(p => ({
+  expense_id: expenseId,
+  person_id: p.id,
+  amount_owed: p.amountOwed
+}))
     const { error: splitError } = await db.from('expense_splits').insert(splitRows)
     if (splitError) console.error('Split insert error:', splitError)
     await setupReminders(expenseId, splitPeople.map(p => p.name), amount, perPerson)
