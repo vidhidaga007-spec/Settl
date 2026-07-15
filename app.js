@@ -1232,12 +1232,15 @@ function renderFriends() {
 }
       if (!friendMap[name]) friendMap[name] = { name, expenses: [], totalOwed: 0 }
       friendMap[name].expenses.push(e)
-      const perPerson = Number(e.per_person) || Math.round(Number(e.amount) / (people.length + 1))
-      if (e.paid_by === 'You' || e.paid_by === currentUserName) {
-        friendMap[name].totalOwed += perPerson
-      } else {
-        friendMap[name].totalOwed -= perPerson
-      }
+     const split = (e.splits || []).find(s => s.name === name)
+
+const amountOwed = split ? Number(split.amount_owed) : 0
+
+if (e.paid_by === 'You' || e.paid_by === currentUserName) {
+  friendMap[name].totalOwed += amountOwed
+} else {
+  friendMap[name].totalOwed -= amountOwed
+}
     })
   })
 
@@ -1283,12 +1286,18 @@ function openFriendDetail(friendName) {
   const friendExpenses = allExpenses.filter(e => (e.people || []).includes(friendName))
 
   let totalOwed = 0
-  friendExpenses.forEach(e => {
-    const people = e.people || []
-    const perPerson = Number(e.per_person) || Math.round(Number(e.amount) / (people.length + 1))
-    if (e.paid_by === 'You' || e.paid_by === currentUserName) totalOwed += perPerson
-    else totalOwed -= perPerson
-  })
+ friendExpenses.forEach(e => {
+
+  const split = (e.splits || []).find(s => s.name === friendName)
+
+  const amountOwed = split ? Number(split.amount_owed) : 0
+
+  if (e.paid_by === 'You' || e.paid_by === currentUserName)
+    totalOwed += amountOwed
+  else
+    totalOwed -= amountOwed
+
+})
 
   const summaryDiv = document.getElementById('friend-balance-summary')
   summaryDiv.innerHTML = `
