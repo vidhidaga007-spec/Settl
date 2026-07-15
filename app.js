@@ -385,6 +385,7 @@ async function parseExpenseFromText() {
 // ══════════════════════════════════════════════
 
 function showConfirmCard(parsed) {
+  console.log("PARSED OBJECT:", parsed)
   document.getElementById('confirm-original').textContent = '"' + (parsed.transcript || '') + '"'
   document.getElementById('edit-transcript').value = parsed.transcript || ''
   window.currentParsedExpense = parsed
