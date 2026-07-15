@@ -555,6 +555,8 @@ async function confirmExpense() {
   return
 }
 window.isSavingExpense = true
+
+try {
   console.count("confirmExpense called")
   console.log("editingExpenseId =", editingExpenseId)
   const amount = parseFloat(document.getElementById('edit-amount').value)
@@ -620,9 +622,13 @@ for (const name of peopleNames) {
     window.currentParsedExpense.splitType === "unequal"
   ) {
 
-   const split = window.currentParsedExpense.splits.find(
-  s => s.name.toLowerCase() === name.toLowerCase()
+ const split = window.currentParsedExpense.splits.find(s =>
+  (s.name || s.person || "").toLowerCase() === name.toLowerCase()
 )
+
+if (split) {
+  amountOwed = Number(split.amount)
+}
     if (split) {
       amountOwed = Number(split.amount)
     }
@@ -725,7 +731,9 @@ document.querySelector('.btn-confirm').textContent =
 document.getElementById('confirm-card').classList.add('hidden')
 
 showSuccessToast(description, amount)
- window.isSavingExpense = false 
+}
+finally {
+    window.isSavingExpense = false
 }
 
 async function setupReminders(expenseId, people, totalAmount, splitPeople) {
@@ -1236,7 +1244,7 @@ function renderFriends() {
       friendMap[name].expenses.push(e)
      const split = (e.splits || []).find(s => s.name === name)
 
-const amountOwed = split ? Number(split.amount_owed) : 0
+const amountOwed = split ? Number(split.amount) : 0
 
 if (e.paid_by === 'You' || e.paid_by === currentUserName) {
   friendMap[name].totalOwed += amountOwed
