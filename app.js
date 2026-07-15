@@ -517,16 +517,18 @@ function openExpense(expenseId) {
   document.querySelector('.tab-btn').classList.add('active')
 
   // Reuse existing confirmation card logic
-  showConfirmCard({
+ showConfirmCard({
     transcript: expense.transcript,
     amount: expense.amount,
     description: expense.description,
     category: expense.category,
     paidBy: expense.paid_by,
     people: expense.people || [],
+    splits: expense.splits || [],
+    splitType: expense.splits && expense.splits.length ? "unequal" : "equal",
     type: expense.type,
     groupName: expense.group_name
-  })
+})
 
   document.querySelector('.btn-confirm').textContent =
     '💾 Save Changes'
@@ -770,7 +772,7 @@ async function loadExpenses() {
 splits: splits.map(s => ({
     person_id: s.person_id,
     name: s.people?.name,
-    amount_owed: Number(s.amount_owed)
+    amount: Number(s.amount_owed)
 })),
 
 per_person: splits.length > 0 ? Number(splits[0].amount_owed) : Number(e.amount),
