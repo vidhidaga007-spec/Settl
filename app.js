@@ -740,6 +740,8 @@ async function setupReminders(expenseId, people, totalAmount, splitPeople) {
 
   await db.from("reminders").insert(reminders)
 
+}
+
 // ══════════════════════════════════════════════
 // LOAD EXPENSES
 // ══════════════════════════════════════════════
