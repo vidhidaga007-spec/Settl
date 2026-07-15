@@ -469,7 +469,7 @@ if (parsed.splitType === "unequal" && parsed.splits) {
 
   splitHTML += parsed.splits.map(s => `
     <span class="split-chip">
-      ${s.person} owes ₹${Number(s.amount).toLocaleString('en-IN')}
+      ${s.name} owes ₹${Number(s.amount).toLocaleString('en-IN')}
     </span>
   `).join('')
 
