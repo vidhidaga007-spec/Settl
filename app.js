@@ -620,10 +620,9 @@ for (const name of peopleNames) {
     window.currentParsedExpense.splitType === "unequal"
   ) {
 
-    const split = window.currentParsedExpense.splits.find(
-      s => s.person.toLowerCase() === name.toLowerCase()
-    )
-
+   const split = window.currentParsedExpense.splits.find(
+  s => s.name.toLowerCase() === name.toLowerCase()
+)
     if (split) {
       amountOwed = Number(split.amount)
     }
