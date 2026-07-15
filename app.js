@@ -736,6 +736,8 @@ finally {
     window.isSavingExpense = false
 }
 
+}
+
 async function setupReminders(expenseId, people, totalAmount, splitPeople) {
 
   const reminders = splitPeople.map(p => ({
