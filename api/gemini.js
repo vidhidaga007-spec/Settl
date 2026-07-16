@@ -114,7 +114,7 @@ PEOPLE
 
 Return ONLY the people explicitly mentioned.
 
-Recognize phrases like
+Recognize ALL of these patterns:
 
 with Rahul
 
@@ -124,9 +124,25 @@ with Rahul, Khushi and me
 
 between Rahul and Khushi
 
-among Rahul, Khushi and me
+among Rahul and Khushi
 
 split with Rahul
+
+Rahul owes 500
+
+Rahul should pay 500
+
+Rahul pays 500
+
+Rahul 500
+
+Rahul: 500
+
+Rahul - 500
+
+Rahul ₹500
+
+If a person's name appears before an amount, treat that as an explicit split and include that person in the people array.
 
 IMPORTANT
 
@@ -391,26 +407,6 @@ Output:
 
 Input:
 Dinner 1200 with Rahul and Khushi. Rahul 500. Khushi 300.
-Input:
-Paid 490 for dinner. Vidhi owes 200.
-
-Output:
-{
-"amount":490,
-"description":"dinner",
-"category":"🍽️ Food",
-"paidBy":"You",
-"people":["Vidhi"],
-"splitType":"unequal",
-"splits":[
-{
-"person":"Vidhi",
-"amount":200
-}
-],
-"type":"personal",
-"groupName":""
-}
 
 Output:
 {
@@ -428,6 +424,26 @@ Output:
 {
 "person":"Khushi",
 "amount":300
+}
+],
+"type":"personal",
+"groupName":""
+}
+Input:
+Paid 490 for dinner. Vidhi owes 200.
+
+Output:
+{
+"amount":490,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":["Vidhi"],
+"splitType":"unequal",
+"splits":[
+{
+"person":"Vidhi",
+"amount":200
 }
 ],
 "type":"personal",
