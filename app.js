@@ -389,6 +389,9 @@ function showConfirmCard(parsed) {
   document.getElementById('confirm-original').textContent = '"' + (parsed.transcript || '') + '"'
   document.getElementById('edit-transcript').value = parsed.transcript || ''
   window.currentParsedExpense = parsed
+  window.currentParsedExpense.people = parsed.people || []
+window.currentParsedExpense.splits = parsed.splits || []
+window.currentParsedExpense.splitType = parsed.splitType || "equal"
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
   const detectedCategory = detectCategory(parsed.description || '')
