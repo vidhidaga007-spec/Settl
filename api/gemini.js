@@ -150,7 +150,15 @@ people=["You"]
 
 people=["Rahul","You"]
 
-If nobody is mentioned
+If nobody is mentioned in either:
+
+- with ...
+- among ...
+- between ...
+- owes ...
+- should pay ...
+
+then
 
 people=[]
 ----------------------------------------
@@ -167,6 +175,17 @@ However, if the user explicitly mentions how much each person owes, return
 
 splitType = "unequal"
 
+Also include every person mentioned in the splits inside the people array.
+
+For example:
+
+If the user says
+
+Rahul owes 500 and Priya owes 200
+
+then return
+
+people=["Rahul","Priya"]
 and populate the splits array.
 
 Examples:
@@ -372,6 +391,26 @@ Output:
 
 Input:
 Dinner 1200 with Rahul and Khushi. Rahul 500. Khushi 300.
+Input:
+Paid 490 for dinner. Vidhi owes 200.
+
+Output:
+{
+"amount":490,
+"description":"dinner",
+"category":"🍽️ Food",
+"paidBy":"You",
+"people":["Vidhi"],
+"splitType":"unequal",
+"splits":[
+{
+"person":"Vidhi",
+"amount":200
+}
+],
+"type":"personal",
+"groupName":""
+}
 
 Output:
 {
