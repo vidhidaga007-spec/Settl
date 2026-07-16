@@ -14,6 +14,27 @@ export default async function handler(req, res) {
   try {
     const { type, text, audioBase64 } = req.body
     let transcript = text || ''
+    // Detect explicit split amounts like:
+// Rahul owes 500
+// Rahul 500
+// Rahul:500
+// Rahul - 500
+
+const detectedSplits = []
+
+const splitRegex =
+/([A-Za-z]+)\s*(?:owes|should pay|pays|:|-)?\s*₹?\s*(\d+)/gi
+
+let match
+
+while ((match = splitRegex.exec(transcript)) !== null) {
+  detectedSplits.push({
+    person: match[1],
+    amount: Number(match[2])
+  })
+}
+
+console.log("Detected splits:", detectedSplits)
 
     // ── VOICE: transcribe audio using Groq Whisper ──
     if (type === 'voice' && audioBase64) {
