@@ -392,6 +392,8 @@ function showConfirmCard(parsed) {
   window.currentParsedExpense.people = parsed.people || []
 window.currentParsedExpense.splits = parsed.splits || []
 window.currentParsedExpense.splitType = parsed.splitType || "equal"
+  console.log("Current parsed expense:", window.currentParsedExpense)
+console.log("Splits:", window.currentParsedExpense.splits)
   document.getElementById('edit-amount').value = parsed.amount || ''
   document.getElementById('edit-description').value = parsed.description || ''
   const detectedCategory = detectCategory(parsed.description || '')
